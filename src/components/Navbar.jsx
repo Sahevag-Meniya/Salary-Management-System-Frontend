@@ -1,11 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, Users, FileSpreadsheet, Building2, Activity } from 'lucide-react';
+import { NavLink, Link } from 'react-router-dom';
+import { LayoutDashboard, Users, FileSpreadsheet, Building2 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab }) {
+export default function Navbar() {
   const navItems = [
-    { id: 'dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
-    { id: 'records', label: 'Salary Records', icon: Users },
-    { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet },
+    { to: '/', label: 'Executive Dashboard', icon: LayoutDashboard },
+    { to: '/records', label: 'Salary Records', icon: Users },
+    { to: '/reports', label: 'Reports & Export', icon: FileSpreadsheet },
   ];
 
   return (
@@ -13,8 +14,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-linear-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-100">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="h-10 w-10 rounded-xl bg-linear-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-100 group-hover:scale-105 transition-transform">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
@@ -23,25 +24,28 @@ export default function Navbar({ activeTab, setActiveTab }) {
               </div>
               <p className="text-xs text-slate-500">Enterprise Compensation Tool</p>
             </div>
-          </div>
+          </Link>
 
-          {/* Navigation Tabs */}
+          {/* Navigation Links */}
           <nav className="flex items-center space-x-1 sm:space-x-2">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
               return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${isActive
-                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }`}
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
-                </button>
+                </NavLink>
               );
             })}
           </nav>
