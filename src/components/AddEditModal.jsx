@@ -1,5 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calculator, AlertCircle, Save, UserPlus, DollarSign } from 'lucide-react';
+import Select from 'react-select';
+
+const selectStyles = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: '#f8fafc',
+    borderColor: state.isFocused ? '#6366f1' : '#e2e8f0',
+    borderRadius: '0.5rem',
+    minHeight: '38px',
+    boxShadow: state.isFocused ? '0 0 0 2px rgba(99, 102, 241, 0.2)' : 'none',
+    '&:hover': {
+      borderColor: '#cbd5e1',
+    },
+    fontSize: '0.875rem',
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#4f46e5' : state.isFocused ? '#eef2ff' : 'white',
+    color: state.isSelected ? 'white' : '#0f172a',
+    fontSize: '0.875rem',
+    cursor: 'pointer',
+  }),
+  menu: (base) => ({
+    ...base,
+    borderRadius: '0.5rem',
+    overflow: 'hidden',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    zIndex: 9999,
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: '#0f172a',
+    fontWeight: '500',
+  }),
+};
 
 export default function AddEditModal({ isOpen, onClose, onSave, employee = null, filterOptions = {} }) {
   const isEdit = Boolean(employee);
@@ -7,10 +42,10 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
   const initialForm = {
     name: '',
     email: '',
-    country: 'United States',
-    department: 'Engineering',
-    designation: 'Software Engineer',
-    currency: 'USD',
+    country: filterOptions.countries?.[0] || 'United States',
+    department: filterOptions.departments?.[0] || '',
+    designation: filterOptions.designations?.[0] || '',
+    currency: filterOptions.currencies?.[0] || 'USD',
     basicSalary: '',
     allowances: '0',
     deductions: '0',
@@ -141,63 +176,53 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Country *</label>
-              <select
-                value={form.country}
-                onChange={(e) => setForm({ ...form, country: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900"
-              >
-                {filterOptions.countries?.length > 0 ? (
-                  filterOptions.countries.map(c => <option key={c} value={c}>{c}</option>)
-                ) : (
-                  <>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Germany">Germany</option>
-                    <option value="India">India</option>
-                    <option value="Singapore">Singapore</option>
-                    <option value="Japan">Japan</option>
-                  </>
-                )}
-              </select>
+              <Select
+                options={(filterOptions.countries?.length > 0 ? filterOptions.countries : ['United States', 'United Kingdom', 'Germany', 'India', 'Singapore', 'Japan']).map(c => ({ value: c, label: c }))}
+                value={form.country ? { value: form.country, label: form.country } : null}
+                onChange={(opt) => setForm({ ...form, country: opt ? opt.value : '' })}
+                styles={selectStyles}
+                placeholder="Select Country"
+                isClearable
+              />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Currency *</label>
-              <select
-                value={form.currency}
-                onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900 font-semibold text-indigo-700"
-              >
-                <option value="USD">USD ($)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="INR">INR (₹)</option>
-                <option value="SGD">SGD (S$)</option>
-                <option value="JPY">JPY (¥)</option>
-              </select>
+              <Select
+                options={[
+                  { value: 'USD', label: 'USD ($)' },
+                  { value: 'GBP', label: 'GBP (£)' },
+                  { value: 'EUR', label: 'EUR (€)' },
+                  { value: 'INR', label: 'INR (₹)' },
+                  { value: 'SGD', label: 'SGD (S$)' },
+                  { value: 'JPY', label: 'JPY (¥)' }
+                ]}
+                value={form.currency ? { value: form.currency, label: form.currency } : null}
+                onChange={(opt) => setForm({ ...form, currency: opt ? opt.value : '' })}
+                styles={selectStyles}
+                placeholder="Select Currency"
+              />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Department *</label>
-              <input
-                type="text"
-                required
-                value={form.department}
-                onChange={(e) => setForm({ ...form, department: e.target.value })}
-                placeholder="Engineering"
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900"
+              <Select
+                options={(filterOptions.departments || []).map(d => ({ value: d, label: d }))}
+                value={form.department ? { value: form.department, label: form.department } : null}
+                onChange={(opt) => setForm({ ...form, department: opt ? opt.value : '' })}
+                styles={selectStyles}
+                placeholder="Select Department"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Designation *</label>
-              <input
-                type="text"
-                required
-                value={form.designation}
-                onChange={(e) => setForm({ ...form, designation: e.target.value })}
-                placeholder="Senior Engineer"
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900"
+              <Select
+                options={(filterOptions.designations || []).map(des => ({ value: des, label: des }))}
+                value={form.designation ? { value: form.designation, label: form.designation } : null}
+                onChange={(opt) => setForm({ ...form, designation: opt ? opt.value : '' })}
+                styles={selectStyles}
+                placeholder="Select Designation"
               />
             </div>
           </div>
