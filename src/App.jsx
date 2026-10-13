@@ -22,10 +22,8 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-4 mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-          <p>© 2026 PayScale Global • Salary Management Software for 10,000 Employees</p>
+          <p>© 2026 Salary Manager</p>
           <p className="flex items-center gap-2">
-            <span>Powered by <strong>Express</strong> + <strong>MySQL</strong> + <strong>React</strong></span>
-            <span>•</span>
             <span className="text-emerald-600 font-medium">Enterprise Edition</span>
           </p>
         </div>

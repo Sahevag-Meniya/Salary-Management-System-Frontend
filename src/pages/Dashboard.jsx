@@ -86,18 +86,11 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Executive Compensation Intelligence</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Real-time compensation distribution across 10,000 global employees and 6 operating regions.
-          </p>
-        </div>
-
+      <div className="flex items-center justify-end pb-2 border-b border-slate-200">
         {/* Currency Selector (Strict Currency Isolation) */}
         <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-semibold text-slate-500 px-2 flex items-center gap-1">
-            <Globe className="w-3.5 h-3.5 text-indigo-600" /> Currency:
+            <Globe className="w-3.5 h-3.5 text-indigo-600" /> Currency :
           </span>
           <div className="flex flex-wrap gap-1">
             {summary?.currencyBreakdown?.map((item) => (
@@ -124,16 +117,14 @@ export default function Dashboard() {
           value={summary?.totalEmployees ? summary.totalEmployees.toLocaleString() : '10,000'}
           subtitle="Active employees worldwide"
           icon={Users}
-          badge="Global Scale"
           color="indigo"
         />
 
         <StatCard
           title={`Total Payroll (${selectedCurrency})`}
           value={`${selectedCurrency} ${(currentCurrencyData.totalNet || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          subtitle={`Annual run-rate (${(currentCurrencyData.employeeCount || 0).toLocaleString()} employees)`}
+          subtitle={`For ${(currentCurrencyData.employeeCount || 0).toLocaleString()} employees`}
           icon={DollarSign}
-          badge="Isolated Currency"
           color="emerald"
         />
 
@@ -142,16 +133,14 @@ export default function Dashboard() {
           value={`${selectedCurrency} ${(currentCurrencyData.avgNet || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           subtitle="Mean net take-home salary"
           icon={TrendingUp}
-          badge="Market Benchmark"
           color="blue"
         />
 
         <StatCard
-          title={`Pay Band Spread (${selectedCurrency})`}
+          title={`Max Salary (${selectedCurrency})`}
           value={`${selectedCurrency} ${(currentCurrencyData.maxNet || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          subtitle={`Min: ${selectedCurrency} ${(currentCurrencyData.minNet || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+          subtitle={`Min Salary : ${selectedCurrency} ${(currentCurrencyData.minNet || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           icon={Award}
-          badge="Min-Max Range"
           color="violet"
         />
       </div>
@@ -191,7 +180,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900">Department Compensation Breakdown</h3>
-              <p className="text-xs text-slate-500">Expenditure share in {selectedCurrency}</p>
+              <p className="text-xs text-slate-500">Department wise net salary in {selectedCurrency}</p>
             </div>
             <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-semibold border border-emerald-100">
               By Department
@@ -215,15 +204,15 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Role / Designation Average Salary Hierarchy */}
+      {/* Role / Designation Salary Comparison */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Compensation by Job Band & Designation</h3>
-            <p className="text-xs text-slate-500">Average, Minimum, and Maximum Take-Home Pay in {selectedCurrency}</p>
+            <h3 className="text-sm font-bold text-slate-900">Salary Comparison by Role & Seniority</h3>
+            <p className="text-xs text-slate-500">Average vs highest take-home pay for each role in {selectedCurrency}</p>
           </div>
           <span className="text-xs px-2.5 py-1 rounded-md bg-violet-50 text-violet-700 font-semibold border border-violet-100">
-            Pay Band Hierarchy
+            Role Comparison
           </span>
         </div>
 
