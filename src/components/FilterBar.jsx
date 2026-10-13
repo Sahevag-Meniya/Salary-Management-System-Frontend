@@ -71,6 +71,8 @@ const filterSelectStyles = {
 
 export default function FilterBar({ filters, setFilters, filterOptions = {}, onReset }) {
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
+  const [minSalary, setMinSalary] = useState(filters.minSalary || '');
+  const [maxSalary, setMaxSalary] = useState(filters.maxSalary || '');
 
   // Debounce search update
   useEffect(() => {
@@ -80,12 +82,23 @@ export default function FilterBar({ filters, setFilters, filterOptions = {}, onR
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Sync external search term clear
+  // Debounce Net Salary Range update
   useEffect(() => {
-    if (!filters.search && searchTerm) {
-      setSearchTerm('');
-    }
-  }, [filters.search]);
+    const timer = setTimeout(() => {
+      setFilters(prev => {
+        if (prev.minSalary === minSalary && prev.maxSalary === maxSalary) return prev;
+        return { ...prev, minSalary, maxSalary, page: 1 };
+      });
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [minSalary, maxSalary]);
+
+  // Sync external search and salary clears
+  useEffect(() => {
+    if (!filters.search && searchTerm) setSearchTerm('');
+    if (!filters.minSalary && minSalary) setMinSalary('');
+    if (!filters.maxSalary && maxSalary) setMaxSalary('');
+  }, [filters.search, filters.minSalary, filters.maxSalary]);
 
   const handleChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value, page: 1 }));
@@ -93,6 +106,8 @@ export default function FilterBar({ filters, setFilters, filterOptions = {}, onR
 
   const handleReset = () => {
     setSearchTerm('');
+    setMinSalary('');
+    setMaxSalary('');
     onReset();
   };
 
@@ -186,16 +201,16 @@ export default function FilterBar({ filters, setFilters, filterOptions = {}, onR
           <input
             type="number"
             placeholder="Min"
-            value={filters.minSalary || ''}
-            onChange={(e) => handleChange('minSalary', e.target.value)}
+            value={minSalary}
+            onChange={(e) => setMinSalary(e.target.value)}
             className="w-24 px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden focus:ring-1 focus:ring-indigo-500 text-slate-800"
           />
           <span className="text-slate-400">—</span>
           <input
             type="number"
             placeholder="Max"
-            value={filters.maxSalary || ''}
-            onChange={(e) => handleChange('maxSalary', e.target.value)}
+            value={maxSalary}
+            onChange={(e) => setMaxSalary(e.target.value)}
             className="w-24 px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden focus:ring-1 focus:ring-indigo-500 text-slate-800"
           />
         </div>

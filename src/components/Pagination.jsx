@@ -1,5 +1,67 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import Select from 'react-select';
+
+const limitSelectStyles = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: '#f8fafc',
+    borderColor: state.isFocused ? '#6366f1' : '#e2e8f0',
+    borderRadius: '0.5rem',
+    minHeight: '32px',
+    height: '32px',
+    width: '76px',
+    boxShadow: state.isFocused ? '0 0 0 2px rgba(99, 102, 241, 0.2)' : 'none',
+    '&:hover': {
+      borderColor: '#cbd5e1',
+    },
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+  }),
+  valueContainer: (base) => ({
+    ...base,
+    padding: '0 6px',
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: '#0f172a',
+    fontWeight: '600',
+    fontSize: '0.75rem',
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#4f46e5' : state.isFocused ? '#eef2ff' : 'white',
+    color: state.isSelected ? 'white' : '#1e293b',
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    padding: '4px 8px',
+  }),
+  menu: (base) => ({
+    ...base,
+    borderRadius: '0.5rem',
+    overflow: 'hidden',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
+    zIndex: 9999,
+    border: '1px solid #e2e8f0',
+    width: '76px',
+    minWidth: '76px',
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    padding: '2px',
+    color: '#94a3b8',
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+};
+
+const limitOptions = [
+  { value: 10, label: '10' },
+  { value: 25, label: '25' },
+  { value: 50, label: '50' },
+  { value: 100, label: '100' },
+];
 
 export default function Pagination({ page, limit, total, totalPages, onPageChange, onLimitChange }) {
   const startItem = total === 0 ? 0 : (page - 1) * limit + 1;
@@ -37,18 +99,16 @@ export default function Pagination({ page, limit, total, totalPages, onPageChang
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border-t border-slate-200 rounded-b-xl text-sm">
       {/* Left: Rows Per Page & Record Counts */}
       <div className="flex items-center gap-4 text-xs text-slate-500">
-        <div className="flex items-center gap-1.5">
-          <span>Rows per page:</span>
-          <select
-            value={limit}
-            onChange={(e) => onLimitChange(Number(e.target.value))}
-            className="px-2 py-1 bg-slate-50 border border-slate-200 rounded-md font-medium text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-slate-600">Rows per page:</span>
+          <Select
+            options={limitOptions}
+            value={limitOptions.find(o => o.value === limit)}
+            onChange={(opt) => onLimitChange(opt ? opt.value : 25)}
+            isSearchable={false}
+            styles={limitSelectStyles}
+            menuPlacement="top"
+          />
         </div>
 
         <span>
