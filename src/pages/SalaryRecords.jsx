@@ -4,7 +4,7 @@ import FilterBar from '../components/FilterBar';
 import Pagination from '../components/Pagination';
 import AddEditModal from '../components/AddEditModal';
 import EmployeeDetailModal from '../components/EmployeeDetailModal';
-import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import Swal from 'sweetalert2';
 import {
   UserPlus, ArrowUpDown, Eye, Edit2, Trash2,
   RefreshCw, Users, FileDown, AlertCircle
@@ -41,9 +41,6 @@ export default function SalaryRecords() {
   const [selectedForEdit, setSelectedForEdit] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedForDetail, setSelectedForDetail] = useState(null);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedForDelete, setSelectedForDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch filter options once
   useEffect(() => {
@@ -89,24 +86,60 @@ export default function SalaryRecords() {
   const handleSaveSalary = async (payload) => {
     if (selectedForEdit) {
       await api.updateSalary(selectedForEdit.id, payload);
+      Swal.fire({
+        title: 'Updated!',
+        text: `Salary record has been updated successfully.`,
+        icon: 'success',
+        timer: 1800,
+        showConfirmButton: false
+      });
     } else {
       await api.createSalary(payload);
+      Swal.fire({
+        title: 'Added!',
+        text: `Salary record has been added successfully.`,
+        icon: 'success',
+        timer: 1800,
+        showConfirmButton: false
+      });
     }
     await fetchRecords();
   };
 
-  const handleDeleteSalary = async () => {
-    if (!selectedForDelete) return;
-    setIsDeleting(true);
-    try {
-      await api.deleteSalary(selectedForDelete.id);
-      setIsDeleteOpen(false);
-      setSelectedForDelete(null);
-      await fetchRecords();
-    } catch (err) {
-      alert(`Failed to delete record: ${err.message}`);
-    } finally {
-      setIsDeleting(false);
+  // SweetAlert2 Delete Confirmation
+  const handleDeleteSalary = async (emp) => {
+    const result = await Swal.fire({
+      title: 'Delete Employee Record?',
+      html: `This will not be reverted.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      focusCancel: true
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.deleteSalary(emp.id);
+        await fetchRecords();
+        Swal.fire({
+          title: 'Deleted!',
+          text: `Record has been deleted.`,
+          icon: 'success',
+          timer: 1800,
+          showConfirmButton: false
+        });
+      } catch (err) {
+        Swal.fire({
+          title: 'Error!',
+          text: err.message || 'Failed to delete record.',
+          icon: 'error',
+          confirmButtonColor: '#4f46e5'
+        });
+      }
     }
   };
 
@@ -277,10 +310,7 @@ export default function SalaryRecords() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => {
-                              setSelectedForDelete(emp);
-                              setIsDeleteOpen(true);
-                            }}
+                            onClick={() => handleDeleteSalary(emp)}
                             className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
                             title="Delete Record"
                           >
@@ -326,17 +356,6 @@ export default function SalaryRecords() {
           setSelectedForDetail(null);
         }}
         employee={selectedForDetail}
-      />
-
-      <DeleteConfirmModal
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setSelectedForDelete(null);
-        }}
-        onConfirm={handleDeleteSalary}
-        employee={selectedForDelete}
-        isDeleting={isDeleting}
       />
     </div>
   );
