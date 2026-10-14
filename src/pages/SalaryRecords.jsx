@@ -203,9 +203,6 @@ export default function SalaryRecords() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Employee Salary Records</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Manage compensation records for {total.toLocaleString()} employees with sub-50ms indexed search.
-          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -292,7 +289,7 @@ export default function SalaryRecords() {
                   <td colSpan="9" className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <RefreshCw className="w-6 h-6 text-indigo-600 animate-spin" />
-                      <p className="text-xs font-medium">Fetching 10,000 employee dataset...</p>
+                      <p className="text-xs font-medium">Fetching Details...</p>
                     </div>
                   </td>
                 </tr>
@@ -324,17 +321,17 @@ export default function SalaryRecords() {
                         <div className="text-[11px] text-slate-400">{emp.designation}</div>
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-slate-700">
-                        {emp.currency} {formatNumber(sal.basicSalary)}
+                        {formatNumber(sal.basicSalary)}
                       </td>
                       <td className="py-3 px-4 text-right text-emerald-600 font-medium">
-                        +{emp.currency} {formatNumber(sal.allowances)}
+                        +{formatNumber(sal.allowances)}
                       </td>
                       <td className="py-3 px-4 text-right text-red-500 font-medium">
-                        -{emp.currency} {formatNumber(sal.deductions)}
+                        -{formatNumber(sal.deductions)}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <span className="font-extrabold text-sm text-indigo-700">
-                          {emp.currency} {formatNumber(sal.netSalary)}
+                          {formatNumber(sal.netSalary)}
                         </span>
                       </td>
                       <td className="py-3 px-4">

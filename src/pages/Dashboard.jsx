@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [countries, setCountries] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
-  
+
   const initialCurrency = searchParams.get('currency') || 'INR';
   const [selectedCurrency, setSelectedCurrency] = useState(initialCurrency);
   const [loading, setLoading] = useState(true);
@@ -88,7 +88,7 @@ export default function Dashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3">
         <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
-        <p className="text-sm font-medium text-slate-600">Loading compensation intelligence...</p>
+        <p className="text-sm font-medium text-slate-600">Fetching Details...</p>
       </div>
     );
   }
@@ -121,11 +121,10 @@ export default function Dashboard() {
               <button
                 key={item.currency}
                 onClick={() => handleCurrencyChange(item.currency)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  selectedCurrency === item.currency
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedCurrency === item.currency
                     ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
+                  }`}
               >
                 {item.currency}
               </button>

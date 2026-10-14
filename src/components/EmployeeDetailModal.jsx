@@ -85,7 +85,7 @@ export default function EmployeeDetailModal({ isOpen, onClose, employee }) {
 
             {/* Allowances */}
             <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50">
-              <span className="text-slate-600 font-medium">Allowances (Housing & Travel)</span>
+              <span className="text-slate-600 font-medium">Allowances</span>
               <span className="font-semibold text-emerald-600">+{formatCurrency(allow)}</span>
             </div>
 
@@ -98,8 +98,8 @@ export default function EmployeeDetailModal({ isOpen, onClose, employee }) {
             {/* Deductions */}
             <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50">
               <div>
-                <span className="text-slate-600 font-medium">Statutory Deductions (Tax & Benefits)</span>
-                <span className="ml-1.5 text-xs text-slate-400">({deductionPct}% of Gross)</span>
+                <span className="text-slate-600 font-medium">Deductions</span>
+                <span className="ml-1.5 text-xs text-slate-400">( {deductionPct}% of Gross )</span>
               </div>
               <span className="font-semibold text-red-600">-{formatCurrency(deduct)}</span>
             </div>
@@ -127,7 +127,7 @@ export default function EmployeeDetailModal({ isOpen, onClose, employee }) {
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-200/50 rounded-lg transition-colors cursor-pointer"
           >
-            Close Statement
+            Close
           </button>
         </div>
       </div>

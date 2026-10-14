@@ -4,7 +4,7 @@ import { LayoutDashboard, Users, FileSpreadsheet, Building2 } from 'lucide-react
 
 export default function Navbar() {
   const navItems = [
-    { to: '/', label: 'Executive Dashboard', icon: LayoutDashboard },
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/records', label: 'Salary Records', icon: Users },
     { to: '/reports', label: 'Reports & Export', icon: FileSpreadsheet },
   ];
