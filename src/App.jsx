@@ -21,6 +21,7 @@ function AppContent() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/structures" element={<SalaryStructures />} />
+          <Route path="/structures/new" element={<SalaryStructureEdit />} />
           <Route path="/structures/:id" element={<SalaryStructureDetail />} />
           <Route path="/structures/:id/edit" element={<SalaryStructureEdit />} />
           {/* Catch-all redirect */}

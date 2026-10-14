@@ -8,7 +8,7 @@ import EmployeeDetailModal from '../components/EmployeeDetailModal';
 import Swal from 'sweetalert2';
 import {
   ArrowUpDown, Eye, Edit2, Trash2, MoreVertical,
-  RefreshCw, Users, FileDown, AlertCircle
+  RefreshCw, Users, FileDown, AlertCircle, Plus
 } from 'lucide-react';
 
 const defaultFilters = {
@@ -295,6 +295,13 @@ export default function SalaryStructures() {
             <span>
               Export CSV {isSelectAllMatching ? `(All ${total.toLocaleString()})` : selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
             </span>
+          </button>
+          <button
+            onClick={() => navigate('/structures/new')}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs shadow-indigo-100 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Salary Structure</span>
           </button>
         </div>
       </div>
