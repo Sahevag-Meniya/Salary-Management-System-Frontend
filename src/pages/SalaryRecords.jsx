@@ -58,6 +58,39 @@ export default function SalaryRecords() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedForDetail, setSelectedForDetail] = useState(null);
   const [openActionId, setOpenActionId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isSelectAllMatching, setIsSelectAllMatching] = useState(false);
+
+  // Reset selection when filters or pagination change
+  useEffect(() => {
+    setSelectedIds([]);
+    setIsSelectAllMatching(false);
+  }, [filters]);
+
+  const isAllPageSelected = records.length > 0 && records.every(r => selectedIds.includes(r.id));
+  const isAllSelected = isSelectAllMatching || isAllPageSelected;
+  const isSomeSelected = !isAllSelected && selectedIds.length > 0;
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+      setIsSelectAllMatching(false);
+    } else {
+      setSelectedIds(records.map(r => r.id));
+      setIsSelectAllMatching(true);
+    }
+  };
+
+  const handleToggleSelectOne = (id) => {
+    if (isSelectAllMatching) {
+      setIsSelectAllMatching(false);
+      setSelectedIds(records.map(r => r.id).filter(item => item !== id));
+    } else {
+      setSelectedIds(prev =>
+        prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+      );
+    }
+  };
 
   // Close actions dropdown when clicking outside
   useEffect(() => {
@@ -205,6 +238,29 @@ export default function SalaryRecords() {
     }
   };
 
+  const handleExportCsv = () => {
+    if (!isSelectAllMatching && selectedIds.length === 0) return;
+
+    let exportUrl;
+    if (isSelectAllMatching) {
+      exportUrl = api.getExportUrl({
+        search: filters.search,
+        country: filters.country,
+        department: filters.department,
+        designation: filters.designation,
+        currency: filters.currency,
+        minSalary: filters.minSalary,
+        maxSalary: filters.maxSalary
+      });
+    } else {
+      exportUrl = api.getExportUrl({
+        ids: selectedIds
+      });
+    }
+
+    window.location.href = exportUrl;
+  };
+
   const formatNumber = (num) => {
     return Number(num || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
@@ -218,6 +274,28 @@ export default function SalaryRecords() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleExportCsv}
+            disabled={!isSelectAllMatching && selectedIds.length === 0}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+              !isSelectAllMatching && selectedIds.length === 0
+                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                : 'bg-white border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-slate-700 hover:text-emerald-700 shadow-xs cursor-pointer'
+            }`}
+            title={
+              !isSelectAllMatching && selectedIds.length === 0
+                ? "Select records below to export"
+                : isSelectAllMatching
+                ? `Export all ${total.toLocaleString()} filtered records to CSV`
+                : `Export ${selectedIds.length} selected record(s) to CSV`
+            }
+          >
+            <FileDown className={`w-4 h-4 ${!isSelectAllMatching && selectedIds.length === 0 ? 'text-slate-400' : 'text-emerald-600'}`} />
+            <span>
+              Export CSV {isSelectAllMatching ? `(All ${total.toLocaleString()})` : selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
+            </span>
+          </button>
+
           <button
             onClick={() => {
               setSelectedForEdit(null);
@@ -241,6 +319,28 @@ export default function SalaryRecords() {
         />
       </div>
 
+      {/* All-matching Selection Info Banner */}
+      {isSelectAllMatching && (
+        <div className="shrink-0 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2 flex items-center justify-between text-xs text-indigo-900 shadow-2xs animate-in fade-in duration-150">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
+            <span>
+              All <strong>{total.toLocaleString()}</strong> records are selected across all pages for export.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedIds([]);
+              setIsSelectAllMatching(false);
+            }}
+            className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
+          >
+            Clear Selection
+          </button>
+        </div>
+      )}
+
       {/* Main Table Container */}
       <div className="flex-1 min-h-0 bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
         {error && (
@@ -254,6 +354,17 @@ export default function SalaryRecords() {
           <table className="w-full text-left text-xs text-slate-600 border-collapse">
             <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 shadow-xs">
               <tr>
+                <th className="py-3 px-3 bg-slate-50 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={el => { if (el) el.indeterminate = isSomeSelected; }}
+                    onChange={handleToggleSelectAll}
+                    disabled={loading || records.length === 0}
+                    className="w-4 h-4 rounded-sm border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                    title={isAllSelected ? "Deselect All Records" : "Select All Records on this page"}
+                  />
+                </th>
                 <th className="py-3 px-4 bg-slate-50">#ID</th>
                 <th
                   onClick={() => handleSort('name')}
@@ -300,7 +411,7 @@ export default function SalaryRecords() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-slate-400">
+                  <td colSpan="10" className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <RefreshCw className="w-6 h-6 text-indigo-600 animate-spin" />
                       <p className="text-xs font-medium">Fetching Details...</p>
@@ -309,15 +420,29 @@ export default function SalaryRecords() {
                 </tr>
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-slate-500">
+                  <td colSpan="10" className="py-12 text-center text-slate-500">
                     <p className="font-semibold text-sm">No employee records found</p>
                   </td>
                 </tr>
               ) : (
                 records.map((emp, index) => {
                   const sal = emp.salary || {};
+                  const isSelected = selectedIds.includes(emp.id);
                   return (
-                    <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr
+                      key={emp.id}
+                      className={`transition-colors ${
+                        isSelected ? 'bg-indigo-50/70 hover:bg-indigo-50' : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <td className="py-3 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectOne(emp.id)}
+                          className="w-4 h-4 rounded-sm border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                        />
+                      </td>
                       <td className="py-3 px-4 font-mono font-medium text-slate-400">#{emp.id}</td>
                       <td className="py-3 px-4">
                         <div className="font-bold text-slate-900">{emp.name}</div>

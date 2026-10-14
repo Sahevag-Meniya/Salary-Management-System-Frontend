@@ -93,7 +93,11 @@ export const api = {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== null && val !== '') {
-        query.append(key, val);
+        if (Array.isArray(val)) {
+          if (val.length > 0) query.append(key, val.join(','));
+        } else {
+          query.append(key, val);
+        }
       }
     });
     return `${BASE_URL}/reports/export?${query.toString()}`;

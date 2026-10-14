@@ -1,12 +1,11 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, Users, FileSpreadsheet, Building2 } from 'lucide-react';
+import { LayoutDashboard, Users, Building2 } from 'lucide-react';
 
 export default function Navbar() {
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/records', label: 'Salary Records', icon: Users },
-    { to: '/reports', label: 'Reports & Export', icon: FileSpreadsheet },
   ];
 
   return (

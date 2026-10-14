@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import SalaryRecords from './pages/SalaryRecords';
-import Reports from './pages/Reports';
 
 function AppContent() {
   const location = useLocation();
@@ -20,7 +19,6 @@ function AppContent() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/records" element={<SalaryRecords />} />
-          <Route path="/reports" element={<Reports />} />
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
