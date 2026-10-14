@@ -2,11 +2,11 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
-import SalaryRecords from './pages/SalaryRecords';
+import SalaryStructures from './pages/SalaryStructures';
 
 function AppContent() {
   const location = useLocation();
-  const isViewportLocked = ['/', '/dashboard', '/records'].includes(location.pathname);
+  const isViewportLocked = ['/', '/dashboard', '/structures'].includes(location.pathname);
 
   return (
     <div className={`min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans antialiased ${isViewportLocked ? 'h-screen overflow-hidden' : ''}`}>
@@ -18,7 +18,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
-          <Route path="/records" element={<SalaryRecords />} />
+          <Route path="/structures" element={<SalaryStructures />} />
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

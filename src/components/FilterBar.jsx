@@ -235,7 +235,7 @@ export default function FilterBar({ filters, setFilters, filterOptions = {}, onR
       {/* Second Row: Salary Range & Reset */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
         <div className="flex items-center gap-2 text-xs text-slate-600">
-          <span className="font-medium text-slate-700">Net Salary Range:</span>
+          <span className="font-medium text-slate-700">Net Take Home Salary Range:</span>
           <input
             type="number"
             placeholder="Min"

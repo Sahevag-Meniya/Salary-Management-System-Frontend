@@ -7,7 +7,7 @@ import AddEditModal from '../components/AddEditModal';
 import EmployeeDetailModal from '../components/EmployeeDetailModal';
 import Swal from 'sweetalert2';
 import {
-  UserPlus, ArrowUpDown, Eye, Edit2, Trash2, MoreVertical,
+  ArrowUpDown, Eye, Edit2, Trash2, MoreVertical,
   RefreshCw, Users, FileDown, AlertCircle
 } from 'lucide-react';
 
@@ -39,7 +39,7 @@ const parseFiltersFromSearchParams = (params) => ({
   limit: parseInt(params.get('limit'), 10) || 25,
 });
 
-export default function SalaryRecords() {
+export default function SalaryStructures() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +143,7 @@ export default function SalaryRecords() {
     });
   }, [searchParams]);
 
-  // Fetch salary records whenever filters change
+  // Fetch salary structures whenever filters change
   const fetchRecords = async () => {
     setLoading(true);
     setError(null);
@@ -153,7 +153,7 @@ export default function SalaryRecords() {
       setTotal(res.total || 0);
       setTotalPages(res.totalPages || 1);
     } catch (err) {
-      setError(err.message || 'Failed to load employee salary records');
+      setError(err.message || 'Failed to load employee salary structures');
     } finally {
       setLoading(false);
     }
@@ -183,7 +183,7 @@ export default function SalaryRecords() {
       await api.updateSalary(selectedForEdit.id, payload);
       Swal.fire({
         title: 'Updated!',
-        text: `Salary record has been updated successfully.`,
+        text: `Salary structure has been updated successfully.`,
         icon: 'success',
         timer: 1800,
         showConfirmButton: false
@@ -192,7 +192,7 @@ export default function SalaryRecords() {
       await api.createSalary(payload);
       Swal.fire({
         title: 'Added!',
-        text: `Salary record has been added successfully.`,
+        text: `Salary structure has been created successfully.`,
         icon: 'success',
         timer: 1800,
         showConfirmButton: false
@@ -205,7 +205,7 @@ export default function SalaryRecords() {
   const handleDeleteSalary = async (emp) => {
     const result = await Swal.fire({
       title: 'Delete Employee Record?',
-      html: `This will not be revert.`,
+      html: `This will remove the employee and their salary structures.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#dc2626',
@@ -270,7 +270,7 @@ export default function SalaryRecords() {
       {/* Page Header */}
       <div className="shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Employee Salary Records</h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Employee Active Salary Structures</h1>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -294,17 +294,6 @@ export default function SalaryRecords() {
             <span>
               Export CSV {isSelectAllMatching ? `(All ${total.toLocaleString()})` : selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
             </span>
-          </button>
-
-          <button
-            onClick={() => {
-              setSelectedForEdit(null);
-              setIsAddEditOpen(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-indigo-200 transition-all cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Add Employee Salary</span>
           </button>
         </div>
       </div>
@@ -421,7 +410,7 @@ export default function SalaryRecords() {
               ) : records.length === 0 ? (
                 <tr>
                   <td colSpan="10" className="py-12 text-center text-slate-500">
-                    <p className="font-semibold text-sm">No employee records found</p>
+                    <p className="font-semibold text-sm">No employee salary structures found</p>
                   </td>
                 </tr>
               ) : (
