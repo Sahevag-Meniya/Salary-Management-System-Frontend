@@ -120,6 +120,59 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
   const net = gross - deduct;
   const isNetNegative = net < 0;
 
+  // Linked Cascading Designation Options based on Selected Department
+  const availableDesignations = React.useMemo(() => {
+    if (!filterOptions.designationList || filterOptions.designationList.length === 0) {
+      return (filterOptions.designations || []).map(d => ({ value: d, label: d }));
+    }
+    if (form.department) {
+      const filtered = filterOptions.designationList.filter(
+        d => d.departmentName.toLowerCase() === form.department.toLowerCase()
+      );
+      if (filtered.length > 0) {
+        return filtered.map(d => ({ value: d.name, label: d.name, id: d.id, dept: d.departmentName }));
+      }
+    }
+    return filterOptions.designationList.map(d => ({ value: d.name, label: `${d.name} (${d.departmentName})`, id: d.id, dept: d.departmentName }));
+  }, [filterOptions, form.department]);
+
+  const handleDepartmentChange = (opt) => {
+    const newDept = opt ? opt.value : '';
+    let newDesig = form.designation;
+    let newDesigId = form.designationId;
+
+    if (newDept && form.designation && filterOptions.designationList) {
+      const stillValid = filterOptions.designationList.some(
+        d => d.name === form.designation && d.departmentName.toLowerCase() === newDept.toLowerCase()
+      );
+      if (!stillValid) {
+        newDesig = '';
+        newDesigId = null;
+      }
+    }
+
+    setForm({
+      ...form,
+      department: newDept,
+      designation: newDesig,
+      designationId: newDesigId
+    });
+  };
+
+  const handleDesignationChange = (opt) => {
+    if (!opt) {
+      setForm({ ...form, designation: '', designationId: null });
+      return;
+    }
+    const matched = filterOptions.designationList?.find(d => d.id === opt.id || d.name === opt.value);
+    setForm({
+      ...form,
+      designation: opt.value,
+      designationId: opt.id || matched?.id || null,
+      department: matched?.departmentName || form.department
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -251,7 +304,7 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
               <Select
                 options={(filterOptions.departments || []).map(d => ({ value: d, label: d }))}
                 value={form.department ? { value: form.department, label: form.department } : null}
-                onChange={(opt) => setForm({ ...form, department: opt ? opt.value : '' })}
+                onChange={handleDepartmentChange}
                 styles={selectStyles}
                 placeholder="Select Department"
                 isClearable
@@ -263,11 +316,11 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
                 Designation <span className="text-red-500">*</span>
               </label>
               <Select
-                options={(filterOptions.designations || []).map(des => ({ value: des, label: des }))}
+                options={availableDesignations}
                 value={form.designation ? { value: form.designation, label: form.designation } : null}
-                onChange={(opt) => setForm({ ...form, designation: opt ? opt.value : '' })}
+                onChange={handleDesignationChange}
                 styles={selectStyles}
-                placeholder="Select Designation"
+                placeholder={form.department ? `Select Role in ${form.department}` : "Select Designation"}
                 isClearable
               />
             </div>

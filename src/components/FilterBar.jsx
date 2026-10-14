@@ -133,8 +133,31 @@ export default function FilterBar({ filters, setFilters, filterOptions = {}, onR
 
   const countryOptions = (filterOptions.countries || []).map(c => ({ value: c, label: c }));
   const departmentOptions = (filterOptions.departments || []).map(d => ({ value: d, label: d }));
-  const designationOptions = (filterOptions.designations || []).map(r => ({ value: r, label: r }));
   const currencyOptions = (filterOptions.currencies || []).map(curr => ({ value: curr, label: curr }));
+
+  const designationOptions = React.useMemo(() => {
+    if (filters.department && filterOptions.designationList?.length > 0) {
+      const filtered = filterOptions.designationList.filter(
+        d => d.departmentName.toLowerCase() === filters.department.toLowerCase()
+      );
+      if (filtered.length > 0) {
+        return filtered.map(r => ({ value: r.name, label: r.name }));
+      }
+    }
+    return (filterOptions.designations || []).map(r => ({ value: r, label: r }));
+  }, [filters.department, filterOptions]);
+
+  const handleDepartmentFilterChange = (opt) => {
+    const newDept = opt ? opt.value : '';
+    let newDesig = filters.designation;
+    if (newDept && filters.designation && filterOptions.designationList) {
+      const isValid = filterOptions.designationList.some(
+        d => d.name === filters.designation && d.departmentName.toLowerCase() === newDept.toLowerCase()
+      );
+      if (!isValid) newDesig = '';
+    }
+    setFilters(prev => ({ ...prev, department: newDept, designation: newDesig, page: 1 }));
+  };
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
@@ -177,7 +200,7 @@ export default function FilterBar({ filters, setFilters, filterOptions = {}, onR
           <Select
             options={departmentOptions}
             value={filters.department ? { value: filters.department, label: filters.department } : null}
-            onChange={(opt) => handleChange('department', opt ? opt.value : '')}
+            onChange={handleDepartmentFilterChange}
             isClearable
             styles={filterSelectStyles}
             placeholder="All Departments"
