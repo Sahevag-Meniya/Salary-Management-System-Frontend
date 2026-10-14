@@ -3,8 +3,14 @@
  * Uses native fetch with robust error handling.
  */
 
-const rawBaseUrl = import.meta.env.VITE_API_URL || '/api';
-const BASE_URL = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+const rawBaseUrl = (import.meta.env.VITE_API_URL || '/api').trim();
+// Strip trailing slashes
+let cleanBaseUrl = rawBaseUrl.replace(/\/+$/, '');
+// If an absolute HTTP(S) URL without /api is provided, append /api automatically
+if (cleanBaseUrl && !cleanBaseUrl.endsWith('/api') && (cleanBaseUrl.startsWith('http://') || cleanBaseUrl.startsWith('https://'))) {
+  cleanBaseUrl = `${cleanBaseUrl}/api`;
+}
+const BASE_URL = cleanBaseUrl;
 
 async function request(endpoint, options = {}) {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
