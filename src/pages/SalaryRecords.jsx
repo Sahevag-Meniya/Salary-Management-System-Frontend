@@ -210,9 +210,9 @@ export default function SalaryRecords() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex-1 min-h-0 flex flex-col space-y-3">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Employee Salary Records</h1>
         </div>
@@ -232,30 +232,32 @@ export default function SalaryRecords() {
       </div>
 
       {/* Filter Toolbar */}
-      <FilterBar
-        filters={filters}
-        setFilters={setFilters}
-        filterOptions={filterOptions}
-        onReset={handleResetFilters}
-      />
+      <div className="shrink-0">
+        <FilterBar
+          filters={filters}
+          setFilters={setFilters}
+          filterOptions={filterOptions}
+          onReset={handleResetFilters}
+        />
+      </div>
 
       {/* Main Table Container */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="flex-1 min-h-0 bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
         {error && (
-          <div className="p-4 bg-red-50 border-b border-red-200 text-xs text-red-700 flex items-center gap-2">
+          <div className="shrink-0 p-3.5 bg-red-50 border-b border-red-200 text-xs text-red-700 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="overflow-x-auto min-h-[350px]">
+        <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
           <table className="w-full text-left text-xs text-slate-600 border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 shadow-xs">
               <tr>
-                <th className="py-3 px-4">#ID</th>
+                <th className="py-3 px-4 bg-slate-50">#ID</th>
                 <th
                   onClick={() => handleSort('name')}
-                  className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none"
+                  className="py-3 px-4 bg-slate-50 cursor-pointer hover:text-slate-900 select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Employee</span>
@@ -264,35 +266,35 @@ export default function SalaryRecords() {
                 </th>
                 <th
                   onClick={() => handleSort('country')}
-                  className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none"
+                  className="py-3 px-4 bg-slate-50 cursor-pointer hover:text-slate-900 select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Region / Currency</span>
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="py-3 px-4">Department & Role</th>
+                <th className="py-3 px-4 bg-slate-50">Department & Role</th>
                 <th
                   onClick={() => handleSort('basic_salary')}
-                  className="py-3 px-4 text-right cursor-pointer hover:text-slate-900 select-none"
+                  className="py-3 px-4 bg-slate-50 text-right cursor-pointer hover:text-slate-900 select-none"
                 >
                   <div className="flex items-center justify-end gap-1.5">
                     <span>Basic Pay</span>
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="py-3 px-4 text-right">Allowances</th>
-                <th className="py-3 px-4 text-right">Deductions</th>
+                <th className="py-3 px-4 bg-slate-50 text-right">Allowances</th>
+                <th className="py-3 px-4 bg-slate-50 text-right">Deductions</th>
                 <th
                   onClick={() => handleSort('net_salary')}
-                  className="py-3 px-4 text-right cursor-pointer hover:text-slate-900 select-none"
+                  className="py-3 px-4 bg-slate-50 text-right cursor-pointer hover:text-slate-900 select-none"
                 >
                   <div className="flex items-center justify-end gap-1.5 text-indigo-700 font-extrabold">
                     <span>Net Take-Home</span>
                     <ArrowUpDown className="w-3 h-3 text-indigo-400" />
                   </div>
                 </th>
-                <th className="py-3 px-4 text-center">Actions</th>
+                <th className="py-3 px-4 bg-slate-50 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -425,14 +427,16 @@ export default function SalaryRecords() {
         </div>
 
         {/* Server-side Pagination Component */}
-        <Pagination
-          page={filters.page}
-          limit={filters.limit}
-          total={total}
-          totalPages={totalPages}
-          onPageChange={(newPage) => setFilters(prev => ({ ...prev, page: newPage }))}
-          onLimitChange={(newLimit) => setFilters(prev => ({ ...prev, limit: newLimit, page: 1 }))}
-        />
+        <div className="shrink-0 border-t border-slate-200 bg-white">
+          <Pagination
+            page={filters.page}
+            limit={filters.limit}
+            total={total}
+            totalPages={totalPages}
+            onPageChange={(newPage) => setFilters(prev => ({ ...prev, page: newPage }))}
+            onLimitChange={(newLimit) => setFilters(prev => ({ ...prev, limit: newLimit, page: 1 }))}
+          />
+        </div>
       </div>
 
       {/* Modals */}

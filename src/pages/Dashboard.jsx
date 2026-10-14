@@ -108,9 +108,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-end pb-2 border-b border-slate-200">
+    <div className="flex-1 min-h-0 flex flex-col space-y-3">
+      {/* Page Header (Fixed at top) */}
+      <div className="shrink-0 flex items-center justify-end pb-2 border-b border-slate-200">
         {/* Currency Selector (Strict Currency Isolation) */}
         <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-semibold text-slate-500 px-2 flex items-center gap-1">
@@ -133,8 +133,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* KPI Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Scrollable Dashboard Body (Below Currency Filter) */}
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-6 pr-1.5 pb-2">
+        {/* KPI Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Workforce"
           value={summary?.totalEmployees ? summary.totalEmployees.toLocaleString() : '10,000'}
@@ -255,6 +257,7 @@ export default function Dashboard() {
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
       </div>
     </div>
   );
