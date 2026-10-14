@@ -195,7 +195,7 @@ export default function SalaryStructureDetail() {
           <div className="text-2xl font-bold text-slate-900 mt-2">
             {currencySymbol} {formatNumber(grossSalary)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Base + All Earnings / Month</p>
+          <p className="text-[11px] text-slate-400 mt-1">Basic + All Earnings / Month</p>
         </div>
 
         {/* Total Deductions */}

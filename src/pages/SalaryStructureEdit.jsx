@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { api } from '../services/api';
 import {
   ArrowLeft, Save, Briefcase, Calendar, ShieldCheck,
-  AlertCircle, RefreshCw, DollarSign, Plus
+  AlertCircle, RefreshCw, DollarSign, Plus, RotateCcw
 } from 'lucide-react';
 
 const selectStyles = {
@@ -65,17 +65,22 @@ export default function SalaryStructureEdit() {
   // Initial employee data to compare against (for edit mode)
   const [originalEmployee, setOriginalEmployee] = useState(null);
 
-  // Filter options for dropdowns
+  // Filter options for dropdowns and active components
   const [filterOptions, setFilterOptions] = useState({
     countries: [],
     departments: [],
     designations: [],
     currencies: [],
     countryList: [],
-    designationList: []
+    departmentList: [],
+    designationList: [],
+    components: []
   });
 
-  // Form state
+  // Itemized component amounts mapping: { [componentId]: string|number }
+  const [componentValues, setComponentValues] = useState({});
+
+  // Form state for employee context & structure metadata
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -84,9 +89,6 @@ export default function SalaryStructureEdit() {
     designation: '',
     designationId: null,
     currency: 'USD',
-    basicSalary: '',
-    allowances: '',
-    deductions: '',
     effectiveFrom: new Date().toISOString().split('T')[0],
     revisionReason: isEdit ? 'Annual Appraisal / Hike' : 'Joining Package'
   });
@@ -108,33 +110,75 @@ export default function SalaryStructureEdit() {
 
           const empData = empRes.data || empRes;
           const filters = filtersRes.data || filtersRes;
+          const activeComps = filters.components || [];
 
           setOriginalEmployee(empData);
           setFilterOptions(filters);
 
-          const sal = empData.salary || {};
-          const struct = empData.salaryStructure || {};
+          const struct = empData.salaryStructure || empData.salary || {};
+          const countryName = typeof empData.country === 'object' ? (empData.country?.name || '') : (empData.country || '');
+          const deptName = typeof empData.designation?.department === 'object'
+            ? (empData.designation.department.name || '')
+            : (empData.department || '');
+          const desigName = typeof empData.designation === 'object'
+            ? (empData.designation.name || '')
+            : (empData.designation || '');
+          const desigId = empData.designationId || (typeof empData.designation === 'object' ? empData.designation?.id : null);
+          const cur = struct.currency || (typeof empData.country === 'object' ? empData.country?.currencyCode : null) || 'USD';
 
           setForm({
             name: empData.name || '',
             email: empData.email || '',
-            country: empData.country || '',
-            department: empData.department || '',
-            designation: empData.designation || '',
-            designationId: empData.designationId || null,
-            currency: sal.currency || struct.currency || empData.currency || 'USD',
-            basicSalary: sal.basicSalary !== undefined ? String(sal.basicSalary) : '',
-            allowances: sal.allowances !== undefined ? String(sal.allowances) : '',
-            deductions: sal.deductions !== undefined ? String(sal.deductions) : '',
-            effectiveFrom: sal.effectiveFrom || struct.effectiveFrom || new Date().toISOString().split('T')[0],
-            revisionReason: sal.revisionReason || struct.revisionReason || 'Annual Appraisal / Hike'
+            country: countryName,
+            department: deptName,
+            designation: desigName,
+            designationId: desigId,
+            currency: cur,
+            effectiveFrom: struct.effectiveFrom || new Date().toISOString().split('T')[0],
+            revisionReason: struct.revisionReason || 'Annual Appraisal / Hike'
           });
+
+          // Populate componentValues from existing components or defaults
+          const existingComps = struct.components || [];
+          const vals = {};
+
+          if (existingComps.length > 0) {
+            activeComps.forEach(comp => {
+              const match = existingComps.find(ec =>
+                ec.componentId === comp.id ||
+                ec.component?.id === comp.id ||
+                ec.component?.code === comp.code
+              );
+              if (match) {
+                vals[comp.id] = String(match.amount !== undefined ? match.amount : '0');
+              } else {
+                vals[comp.id] = '0';
+              }
+            });
+          } else {
+            // Legacy fallback if no line-item components are recorded
+            const basicVal = Math.round(Number(struct.grossSalary || 0) * 0.5);
+            activeComps.forEach(comp => {
+              if (comp.code === 'BASIC') {
+                vals[comp.id] = String(basicVal);
+              } else if (comp.calculationType === 'percentage') {
+                const pct = parseFloat(comp.defaultValue) || 0;
+                vals[comp.id] = String(Math.round(basicVal * (pct / 100)));
+              } else if (comp.calculationType === 'fixed') {
+                vals[comp.id] = String(comp.defaultValue || 0);
+              } else {
+                vals[comp.id] = '0';
+              }
+            });
+          }
+          setComponentValues(vals);
         } else {
           const filtersRes = await api.getFilterOptions();
           if (!isMounted) return;
 
           const filters = filtersRes.data || filtersRes;
           setFilterOptions(filters);
+          const activeComps = filters.components || [];
 
           setForm({
             name: '',
@@ -144,12 +188,22 @@ export default function SalaryStructureEdit() {
             designation: '',
             designationId: null,
             currency: 'USD',
-            basicSalary: '',
-            allowances: '',
-            deductions: '',
             effectiveFrom: new Date().toISOString().split('T')[0],
             revisionReason: 'Joining Package'
           });
+
+          // Initialize components: fixed defaults for fixed items, empty for basic, 0 for others
+          const vals = {};
+          activeComps.forEach(comp => {
+            if (comp.code === 'BASIC') {
+              vals[comp.id] = '';
+            } else if (comp.calculationType === 'fixed' && parseFloat(comp.defaultValue) > 0) {
+              vals[comp.id] = String(comp.defaultValue);
+            } else {
+              vals[comp.id] = '0';
+            }
+          });
+          setComponentValues(vals);
         }
       } catch (err) {
         console.error('Failed to load details:', err);
@@ -168,19 +222,83 @@ export default function SalaryStructureEdit() {
     };
   }, [id, isEdit]);
 
-  // Real-time calculation helpers
-  const basic = Number(form.basicSalary) || 0;
-  const allow = Number(form.allowances) || 0;
-  const deduct = Number(form.deductions) || 0;
+  // Find the primary BASIC component
+  const basicComp = useMemo(() => {
+    return (filterOptions.components || []).find(c => c.code === 'BASIC');
+  }, [filterOptions.components]);
+
+  // Group active components into earnings and deductions
+  const earningsComponents = useMemo(() => {
+    const list = (filterOptions.components || []).filter(c => c.type === 'earning');
+    // Keep BASIC at the top, followed by remaining earnings sorted by id
+    return [...list].sort((a, b) => (a.code === 'BASIC' ? -1 : b.code === 'BASIC' ? 1 : a.id - b.id));
+  }, [filterOptions.components]);
+
+  const deductionComponents = useMemo(() => {
+    const list = (filterOptions.components || []).filter(c => c.type === 'deduction');
+    return [...list].sort((a, b) => a.id - b.id);
+  }, [filterOptions.components]);
+
+  // Real-time calculated amounts
+  const basic = Number(componentValues[basicComp?.id] || 0);
+
+  const allow = useMemo(() => {
+    return earningsComponents
+      .filter(c => c.code !== 'BASIC')
+      .reduce((sum, c) => sum + (Number(componentValues[c.id]) || 0), 0);
+  }, [earningsComponents, componentValues]);
+
+  const deduct = useMemo(() => {
+    return deductionComponents
+      .reduce((sum, c) => sum + (Number(componentValues[c.id]) || 0), 0);
+  }, [deductionComponents, componentValues]);
+
   const gross = basic + allow;
   const net = gross - deduct;
   const isNetNegative = net < 0;
   const deductionPercent = gross > 0 ? ((deduct / gross) * 100).toFixed(1) : 0;
 
-  // Original figures for comparison (edit mode)
-  const origSal = originalEmployee?.salary || {};
+  // Comparison figures for edit mode
+  const origSal = originalEmployee?.salaryStructure || originalEmployee?.salary || {};
   const origNet = Number(origSal.netSalary || 0);
   const netDiff = net - origNet;
+
+  // Handler for Basic Pay changes with auto-calculation of percentage components (HRA, DA, PF)
+  const handleBasicChange = (value) => {
+    const numBasic = parseFloat(value) || 0;
+    setComponentValues(prev => {
+      const next = { ...prev };
+      if (basicComp) {
+        next[basicComp.id] = value;
+      }
+      (filterOptions.components || []).forEach(comp => {
+        if (comp.calculationType === 'percentage' && comp.id !== basicComp?.id) {
+          const pct = parseFloat(comp.defaultValue) || 0;
+          next[comp.id] = value === '' ? '0' : String(Math.round(numBasic * (pct / 100)));
+        }
+      });
+      return next;
+    });
+  };
+
+  // Handler for editing any individual component amount
+  const handleComponentChange = (compId, value) => {
+    setComponentValues(prev => ({
+      ...prev,
+      [compId]: value
+    }));
+  };
+
+  // Re-sync a percentage component to formula based on current Basic Pay
+  const handleRecalculatePercentage = (comp) => {
+    const numBasic = Number(componentValues[basicComp?.id] || 0);
+    const pct = parseFloat(comp.defaultValue) || 0;
+    const computed = Math.round(numBasic * (pct / 100));
+    setComponentValues(prev => ({
+      ...prev,
+      [comp.id]: String(computed)
+    }));
+  };
 
   // Cascading designations based on selected department
   const availableDesignations = useMemo(() => {
@@ -280,7 +398,7 @@ export default function SalaryStructureEdit() {
       setValidationError('Please select a designation');
       return;
     }
-    if (!form.basicSalary || basic <= 0) {
+    if (!basic || basic <= 0) {
       setValidationError('Basic salary must be greater than zero');
       return;
     }
@@ -291,6 +409,11 @@ export default function SalaryStructureEdit() {
 
     setSaving(true);
     try {
+      const componentsPayload = (filterOptions.components || []).map(comp => ({
+        componentId: comp.id,
+        amount: Number(componentValues[comp.id]) || 0
+      }));
+
       const payload = {
         name: form.name.trim(),
         email: form.email.trim(),
@@ -303,7 +426,8 @@ export default function SalaryStructureEdit() {
         allowances: allow,
         deductions: deduct,
         effectiveFrom: form.effectiveFrom || new Date().toISOString().split('T')[0],
-        revisionReason: form.revisionReason ? form.revisionReason.trim() : (isEdit ? 'Updated Structure' : 'Joining Package')
+        revisionReason: form.revisionReason ? form.revisionReason.trim() : (isEdit ? 'Updated Structure' : 'Joining Package'),
+        components: componentsPayload
       };
 
       if (isEdit) {
@@ -312,12 +436,12 @@ export default function SalaryStructureEdit() {
         await Swal.fire({
           icon: 'success',
           title: 'Salary Structure Updated!',
-          text: `Salary package for ${form.name} was successfully updated.`,
+          text: `Salary package for ${form.name} was successfully updated with itemized components.`,
           timer: 1800,
           showConfirmButton: false
         });
 
-        navigate(`/structures/${id}`);
+        navigate(`/structures`);
       } else {
         const res = await api.createSalaryStructure(payload);
         const newEmp = res.data || res;
@@ -325,12 +449,12 @@ export default function SalaryStructureEdit() {
         await Swal.fire({
           icon: 'success',
           title: 'Salary Structure Created!',
-          text: `Salary structure for ${form.name} was successfully created.`,
+          text: `Salary structure for ${form.name} was successfully created with itemized components.`,
           timer: 1800,
           showConfirmButton: false
         });
 
-        navigate(newEmp.id ? `/structures/${newEmp.id}` : '/structures');
+        navigate('/structures');
       }
     } catch (err) {
       console.error('Operation failed:', err);
@@ -401,7 +525,7 @@ export default function SalaryStructureEdit() {
               {isEdit ? (
                 <>Updating compensation package for <span className="font-bold text-slate-700">{originalEmployee.name}</span></>
               ) : (
-                'Configure employee designation, compensation structure, and withholding rules'
+                'Configure employee details, itemized earnings and deductions, and calculate net take-home'
               )}
             </p>
           </div>
@@ -410,7 +534,7 @@ export default function SalaryStructureEdit() {
         <div className="flex items-center gap-2.5">
           <button
             type="button"
-            onClick={() => navigate(isEdit ? `/structures/${id}` : '/structures')}
+            onClick={() => navigate('/structures')}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -450,7 +574,7 @@ export default function SalaryStructureEdit() {
       <form id="edit-salary-structure-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 Cols): Form Sections */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Section 1: Employee Details */}
+          {/* Section 1: Employee Context */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
@@ -535,82 +659,210 @@ export default function SalaryStructureEdit() {
             </div>
           </div>
 
-          {/* Section 2: Compensation & Breakdown */}
+          {/* Section 2: Itemized Salary Structure Components */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                  Compensation Package Breakdown
+                  Itemized Salary Structure Components
                 </h2>
               </div>
-              <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
-                Currency: {form.currency}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                  Currency: {form.currency}
+                </span>
+                <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                  {(filterOptions.components || []).length} Active Components
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Basic Pay <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={form.basicSalary}
-                    onChange={(e) => setForm({ ...form, basicSalary: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full h-10 pl-3 pr-8 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                  <span className="absolute right-3 top-2.5 text-[10px] font-bold text-slate-400">
-                    {form.currency}
+            {/* Quick Summary Strip */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-50/80 rounded-xl border border-slate-200/80">
+              <div className="flex items-center justify-between sm:flex-col sm:items-start px-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Gross Earnings</span>
+                <span className="text-base font-extrabold text-emerald-700">
+                  +{form.currency} {formatNumber(gross)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between sm:flex-col sm:items-start px-2 border-t sm:border-t-0 sm:border-l border-slate-200/80 pt-2 sm:pt-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Deductions</span>
+                <span className="text-base font-extrabold text-red-600">
+                  -{form.currency} {formatNumber(deduct)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between sm:flex-col sm:items-start px-2 border-t sm:border-t-0 sm:border-l border-slate-200/80 pt-2 sm:pt-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Net Take-Home Pay</span>
+                <span className={`text-base font-extrabold ${isNetNegative ? 'text-red-600' : 'text-indigo-700'}`}>
+                  {form.currency} {formatNumber(net)}
+                </span>
+              </div>
+            </div>
+
+            {/* Two Sub-Cards: Earnings & Deductions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+              {/* Earnings Column */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Earnings & Allowances
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    +{form.currency} {formatNumber(gross)}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">Core contractual wage</p>
+
+                <div className="space-y-2.5">
+                  {earningsComponents.map((comp) => {
+                    const isBasic = comp.code === 'BASIC';
+                    const isPercentage = comp.calculationType === 'percentage';
+                    const val = componentValues[comp.id] ?? '';
+
+                    return (
+                      <div
+                        key={comp.id}
+                        className={`p-3 rounded-xl border transition-all ${
+                          isBasic
+                            ? 'bg-indigo-50/40 border-indigo-200 ring-1 ring-indigo-200/50'
+                            : 'bg-white border-slate-200/90 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-slate-800">{comp.name}</span>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                              {comp.code}
+                            </span>
+                            {isBasic && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 uppercase">
+                                Base Wage *
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            {isPercentage ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRecalculatePercentage(comp)}
+                                title="Recompute based on Basic Pay"
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-1.5 py-0.5 rounded-sm border border-emerald-200 transition-colors cursor-pointer"
+                              >
+                                <RotateCcw className="w-2.5 h-2.5" />
+                                <span>{Number(comp.defaultValue)}% of Basic</span>
+                              </button>
+                            ) : comp.calculationType === 'remaining' ? (
+                              <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                                Balancing
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                                Fixed
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={val}
+                            onChange={(e) =>
+                              isBasic ? handleBasicChange(e.target.value) : handleComponentChange(comp.id, e.target.value)
+                            }
+                            placeholder="0.00"
+                            required={isBasic}
+                            className={`w-full h-9 pl-3 pr-12 rounded-lg text-xs font-bold focus:outline-hidden focus:ring-2 ${
+                              isBasic
+                                ? 'bg-white border border-indigo-300 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500 shadow-xs'
+                                : 'bg-slate-50/50 border border-slate-300 text-emerald-700 focus:ring-emerald-500 focus:border-emerald-500'
+                            }`}
+                          />
+                          <span className="absolute right-3 top-2 text-[10px] font-bold text-slate-400">
+                            {form.currency}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Allowances
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={form.allowances}
-                    onChange={(e) => setForm({ ...form, allowances: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full h-10 pl-3 pr-8 bg-white border border-slate-300 rounded-xl text-xs font-bold text-emerald-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                  <span className="absolute right-3 top-2.5 text-[10px] font-bold text-slate-400">
-                    {form.currency}
+              {/* Deductions Column */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-red-100">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Deductions & Taxes
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                    -{form.currency} {formatNumber(deduct)}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">HRA, Conveyance, Special</p>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Total Deductions
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={form.deductions}
-                    onChange={(e) => setForm({ ...form, deductions: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full h-10 pl-3 pr-8 bg-white border border-slate-300 rounded-xl text-xs font-bold text-red-600 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                  <span className="absolute right-3 top-2.5 text-[10px] font-bold text-slate-400">
-                    {form.currency}
-                  </span>
+                <div className="space-y-2.5">
+                  {deductionComponents.map((comp) => {
+                    const isPercentage = comp.calculationType === 'percentage';
+                    const val = componentValues[comp.id] ?? '';
+
+                    return (
+                      <div
+                        key={comp.id}
+                        className="p-3 rounded-xl border bg-white border-slate-200/90 hover:border-slate-300 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-slate-800">{comp.name}</span>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                              {comp.code}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            {isPercentage ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRecalculatePercentage(comp)}
+                                title="Recompute based on Basic Pay"
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-50 hover:bg-red-100 px-1.5 py-0.5 rounded-sm border border-red-200 transition-colors cursor-pointer"
+                              >
+                                <RotateCcw className="w-2.5 h-2.5" />
+                                <span>{Number(comp.defaultValue)}% of Basic</span>
+                              </button>
+                            ) : (
+                              <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                                Standard
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={val}
+                            onChange={(e) => handleComponentChange(comp.id, e.target.value)}
+                            placeholder="0.00"
+                            className="w-full h-9 pl-3 pr-12 rounded-lg text-xs font-bold bg-slate-50/50 border border-slate-300 text-red-600 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          />
+                          <span className="absolute right-3 top-2 text-[10px] font-bold text-slate-400">
+                            {form.currency}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">PF, TDS, Taxes & Insurance</p>
               </div>
             </div>
           </div>
