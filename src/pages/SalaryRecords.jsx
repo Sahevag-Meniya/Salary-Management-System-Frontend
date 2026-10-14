@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import FilterBar from '../components/FilterBar';
 import Pagination from '../components/Pagination';
@@ -10,7 +11,36 @@ import {
   RefreshCw, Users, FileDown, AlertCircle
 } from 'lucide-react';
 
+const defaultFilters = {
+  search: '',
+  country: '',
+  department: '',
+  designation: '',
+  currency: '',
+  minSalary: '',
+  maxSalary: '',
+  sortBy: 'id',
+  sortOrder: 'ASC',
+  page: 1,
+  limit: 25
+};
+
+const parseFiltersFromSearchParams = (params) => ({
+  search: params.get('search') || '',
+  country: params.get('country') || '',
+  department: params.get('department') || '',
+  designation: params.get('designation') || '',
+  currency: params.get('currency') || '',
+  minSalary: params.get('minSalary') || '',
+  maxSalary: params.get('maxSalary') || '',
+  sortBy: params.get('sortBy') || 'id',
+  sortOrder: params.get('sortOrder') || 'ASC',
+  page: parseInt(params.get('page'), 10) || 1,
+  limit: parseInt(params.get('limit'), 10) || 25,
+});
+
 export default function SalaryRecords() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,21 +50,7 @@ export default function SalaryRecords() {
   const [totalPages, setTotalPages] = useState(1);
   const [filterOptions, setFilterOptions] = useState({ countries: [], departments: [], designations: [], currencies: [] });
 
-  const initialFilters = {
-    search: '',
-    country: '',
-    department: '',
-    designation: '',
-    currency: '',
-    minSalary: '',
-    maxSalary: '',
-    sortBy: 'id',
-    sortOrder: 'ASC',
-    page: 1,
-    limit: 25
-  };
-
-  const [filters, setFilters] = useState(initialFilters);
+  const [filters, setFilters] = useState(() => parseFiltersFromSearchParams(searchParams));
 
   // Modal states
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
@@ -48,6 +64,39 @@ export default function SalaryRecords() {
       .then(res => setFilterOptions(res.data || {}))
       .catch(err => console.error('Failed to load filter options:', err));
   }, []);
+
+  // Sync URL searchParams whenever filters state changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filters.search) params.set('search', filters.search);
+    if (filters.country) params.set('country', filters.country);
+    if (filters.department) params.set('department', filters.department);
+    if (filters.designation) params.set('designation', filters.designation);
+    if (filters.currency) params.set('currency', filters.currency);
+    if (filters.minSalary) params.set('minSalary', filters.minSalary);
+    if (filters.maxSalary) params.set('maxSalary', filters.maxSalary);
+    if (filters.sortBy && filters.sortBy !== 'id') params.set('sortBy', filters.sortBy);
+    if (filters.sortOrder && filters.sortOrder !== 'ASC') params.set('sortOrder', filters.sortOrder);
+    if (filters.page && Number(filters.page) !== 1) params.set('page', String(filters.page));
+    if (filters.limit && Number(filters.limit) !== 25) params.set('limit', String(filters.limit));
+
+    const newQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    if (newQuery !== currentQuery) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [filters]);
+
+  // Sync filters from URL when searchParams change externally (e.g. browser back/forward)
+  useEffect(() => {
+    const fromUrl = parseFiltersFromSearchParams(searchParams);
+    setFilters(prev => {
+      const isDifferent = Object.keys(defaultFilters).some(
+        key => String(fromUrl[key]) !== String(prev[key])
+      );
+      return isDifferent ? fromUrl : prev;
+    });
+  }, [searchParams]);
 
   // Fetch salary records whenever filters change
   const fetchRecords = async () => {
@@ -79,7 +128,8 @@ export default function SalaryRecords() {
   };
 
   const handleResetFilters = () => {
-    setFilters(initialFilters);
+    setFilters(defaultFilters);
+    setSearchParams({}, { replace: true });
   };
 
   // CRUD Actions

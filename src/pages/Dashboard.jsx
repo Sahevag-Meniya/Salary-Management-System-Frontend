@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import StatCard from '../components/StatCard';
 import {
@@ -11,11 +12,14 @@ import {
 } from 'recharts';
 
 export default function Dashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [summary, setSummary] = useState(null);
   const [countries, setCountries] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
-  const [selectedCurrency, setSelectedCurrency] = useState('USD');
+  
+  const initialCurrency = searchParams.get('currency') || 'INR';
+  const [selectedCurrency, setSelectedCurrency] = useState(initialCurrency);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,8 +39,15 @@ export default function Dashboard() {
       setDepartments(deptRes.data || []);
       setDesignations(desigRes.data || []);
 
-      if (sumRes.data?.currencyBreakdown?.length > 0) {
-        setSelectedCurrency(sumRes.data.currencyBreakdown[0].currency);
+      const availableCurrencies = sumRes.data?.currencyBreakdown?.map((c) => c.currency) || [];
+      const currentParam = searchParams.get('currency');
+
+      if (currentParam && availableCurrencies.includes(currentParam)) {
+        setSelectedCurrency(currentParam);
+      } else if (availableCurrencies.length > 0) {
+        const defaultCurr = availableCurrencies.includes(selectedCurrency) ? selectedCurrency : availableCurrencies[0];
+        setSelectedCurrency(defaultCurr);
+        setSearchParams({ currency: defaultCurr }, { replace: true });
       }
     } catch (err) {
       setError(err.message || 'Failed to load executive analytics');
@@ -48,6 +59,19 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Sync state if URL searchParams currency changes externally (back/forward)
+  useEffect(() => {
+    const currFromUrl = searchParams.get('currency');
+    if (currFromUrl && currFromUrl !== selectedCurrency) {
+      setSelectedCurrency(currFromUrl);
+    }
+  }, [searchParams]);
+
+  const handleCurrencyChange = (curr) => {
+    setSelectedCurrency(curr);
+    setSearchParams({ currency: curr }, { replace: true });
+  };
 
   const currentCurrencyData = summary?.currencyBreakdown?.find(
     (c) => c.currency === selectedCurrency
@@ -96,7 +120,7 @@ export default function Dashboard() {
             {summary?.currencyBreakdown?.map((item) => (
               <button
                 key={item.currency}
-                onClick={() => setSelectedCurrency(item.currency)}
+                onClick={() => handleCurrencyChange(item.currency)}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   selectedCurrency === item.currency
                     ? 'bg-indigo-600 text-white shadow-xs'

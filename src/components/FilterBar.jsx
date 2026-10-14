@@ -77,7 +77,10 @@ export default function FilterBar({ filters, setFilters, filterOptions = {}, onR
   // Debounce search update
   useEffect(() => {
     const timer = setTimeout(() => {
-      setFilters(prev => ({ ...prev, search: searchTerm, page: 1 }));
+      setFilters(prev => {
+        if (prev.search === searchTerm) return prev;
+        return { ...prev, search: searchTerm, page: 1 };
+      });
     }, 350);
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -93,12 +96,24 @@ export default function FilterBar({ filters, setFilters, filterOptions = {}, onR
     return () => clearTimeout(timer);
   }, [minSalary, maxSalary]);
 
-  // Sync external search and salary clears
+  // Sync external search and salary changes (e.g. from URL popstate / back button / reset)
   useEffect(() => {
-    if (!filters.search && searchTerm) setSearchTerm('');
-    if (!filters.minSalary && minSalary) setMinSalary('');
-    if (!filters.maxSalary && maxSalary) setMaxSalary('');
-  }, [filters.search, filters.minSalary, filters.maxSalary]);
+    if ((filters.search || '') !== searchTerm) {
+      setSearchTerm(filters.search || '');
+    }
+  }, [filters.search]);
+
+  useEffect(() => {
+    if ((filters.minSalary || '') !== minSalary) {
+      setMinSalary(filters.minSalary || '');
+    }
+  }, [filters.minSalary]);
+
+  useEffect(() => {
+    if ((filters.maxSalary || '') !== maxSalary) {
+      setMaxSalary(filters.maxSalary || '');
+    }
+  }, [filters.maxSalary]);
 
   const handleChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value, page: 1 }));
