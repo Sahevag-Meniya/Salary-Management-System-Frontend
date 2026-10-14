@@ -20,7 +20,7 @@ export default function SalaryStructureDetail() {
       setLoading(true);
       setError(null);
       try {
-        const res = await api.getSalaryById(id);
+        const res = await api.getSalaryStructureById(id);
         const empData = res.data || res;
         setEmployee(empData);
       } catch (err) {

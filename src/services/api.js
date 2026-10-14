@@ -32,43 +32,43 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
-  // Salary Records CRUD
-  async getSalaries(params = {}) {
+  // Salary Structures CRUD
+  async getSalaryStructures(params = {}) {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== null && val !== '') {
         query.append(key, val);
       }
     });
-    return request(`/salaries?${query.toString()}`);
+    return request(`/structures?${query.toString()}`);
   },
 
-  async getSalaryById(id) {
-    return request(`/salaries/${id}`);
+  async getSalaryStructureById(id) {
+    return request(`/structures/${id}`);
   },
 
-  async createSalary(payload) {
-    return request('/salaries', {
+  async createSalaryStructure(payload) {
+    return request('/structures', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
-  async updateSalary(id, payload) {
-    return request(`/salaries/${id}`, {
+  async updateSalaryStructure(id, payload) {
+    return request(`/structures/${id}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
   },
 
-  async deleteSalary(id) {
-    return request(`/salaries/${id}`, {
+  async deleteSalaryStructure(id) {
+    return request(`/structures/${id}`, {
       method: 'DELETE',
     });
   },
 
   async getFilterOptions() {
-    return request('/salaries/filters');
+    return request('/structures/filters');
   },
 
   // Analytics

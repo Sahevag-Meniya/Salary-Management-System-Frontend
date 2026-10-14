@@ -99,7 +99,7 @@ export default function SalaryStructureEdit() {
       setError(null);
       try {
         const [empRes, filtersRes] = await Promise.all([
-          api.getSalaryById(id),
+          api.getSalaryStructureById(id),
           api.getFilterOptions()
         ]);
 
@@ -286,7 +286,7 @@ export default function SalaryStructureEdit() {
         revisionReason: form.revisionReason ? form.revisionReason.trim() : 'Updated Structure'
       };
 
-      await api.updateSalary(id, payload);
+      await api.updateSalaryStructure(id, payload);
 
       await Swal.fire({
         icon: 'success',

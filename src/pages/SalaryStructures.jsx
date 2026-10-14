@@ -149,7 +149,7 @@ export default function SalaryStructures() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getSalaries(filters);
+      const res = await api.getSalaryStructures(filters);
       setRecords(res.data || []);
       setTotal(res.total || 0);
       setTotalPages(res.totalPages || 1);
@@ -181,7 +181,7 @@ export default function SalaryStructures() {
   // CRUD Actions
   const handleSaveSalary = async (payload) => {
     if (selectedForEdit) {
-      await api.updateSalary(selectedForEdit.id, payload);
+      await api.updateSalaryStructure(selectedForEdit.id, payload);
       Swal.fire({
         title: 'Updated!',
         text: `Salary structure has been updated successfully.`,
@@ -190,7 +190,7 @@ export default function SalaryStructures() {
         showConfirmButton: false
       });
     } else {
-      await api.createSalary(payload);
+      await api.createSalaryStructure(payload);
       Swal.fire({
         title: 'Added!',
         text: `Salary structure has been created successfully.`,
@@ -219,7 +219,7 @@ export default function SalaryStructures() {
 
     if (result.isConfirmed) {
       try {
-        await api.deleteSalary(emp.id);
+        await api.deleteSalaryStructure(emp.id);
         await fetchRecords();
         Swal.fire({
           title: 'Deleted!',
