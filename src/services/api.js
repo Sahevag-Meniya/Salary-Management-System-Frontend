@@ -3,10 +3,12 @@
  * Uses native fetch with robust error handling.
  */
 
-const BASE_URL = '/api';
+const rawBaseUrl = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
 async function request(endpoint, options = {}) {
-  const url = `${BASE_URL}${endpoint}`;
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${BASE_URL}${cleanEndpoint}`;
   const config = {
     headers: {
       'Content-Type': 'application/json',

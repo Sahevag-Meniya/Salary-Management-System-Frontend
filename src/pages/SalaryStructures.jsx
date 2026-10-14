@@ -3,8 +3,6 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import FilterBar from '../components/FilterBar';
 import Pagination from '../components/Pagination';
-import AddEditModal from '../components/AddEditModal';
-import EmployeeDetailModal from '../components/EmployeeDetailModal';
 import Swal from 'sweetalert2';
 import {
   ArrowUpDown, Eye, Edit2, Trash2, MoreVertical,
@@ -53,11 +51,6 @@ export default function SalaryStructures() {
 
   const [filters, setFilters] = useState(() => parseFiltersFromSearchParams(searchParams));
 
-  // Modal states
-  const [isAddEditOpen, setIsAddEditOpen] = useState(false);
-  const [selectedForEdit, setSelectedForEdit] = useState(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [selectedForDetail, setSelectedForDetail] = useState(null);
   const [openActionId, setOpenActionId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSelectAllMatching, setIsSelectAllMatching] = useState(false);
@@ -176,30 +169,6 @@ export default function SalaryStructures() {
   const handleResetFilters = () => {
     setFilters(defaultFilters);
     setSearchParams({}, { replace: true });
-  };
-
-  // CRUD Actions
-  const handleSaveSalary = async (payload) => {
-    if (selectedForEdit) {
-      await api.updateSalaryStructure(selectedForEdit.id, payload);
-      Swal.fire({
-        title: 'Updated!',
-        text: `Salary structure has been updated successfully.`,
-        icon: 'success',
-        timer: 1800,
-        showConfirmButton: false
-      });
-    } else {
-      await api.createSalaryStructure(payload);
-      Swal.fire({
-        title: 'Added!',
-        text: `Salary structure has been created successfully.`,
-        icon: 'success',
-        timer: 1800,
-        showConfirmButton: false
-      });
-    }
-    await fetchRecords();
   };
 
   // SweetAlert2 Delete Confirmation
@@ -563,27 +532,6 @@ export default function SalaryStructures() {
           />
         </div>
       </div>
-
-      {/* Modals */}
-      <AddEditModal
-        isOpen={isAddEditOpen}
-        onClose={() => {
-          setIsAddEditOpen(false);
-          setSelectedForEdit(null);
-        }}
-        onSave={handleSaveSalary}
-        employee={selectedForEdit}
-        filterOptions={filterOptions}
-      />
-
-      <EmployeeDetailModal
-        isOpen={isDetailOpen}
-        onClose={() => {
-          setIsDetailOpen(false);
-          setSelectedForDetail(null);
-        }}
-        employee={selectedForDetail}
-      />
     </div>
   );
 }
