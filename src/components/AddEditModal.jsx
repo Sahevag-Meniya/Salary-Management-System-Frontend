@@ -34,7 +34,30 @@ const selectStyles = {
     color: '#0f172a',
     fontWeight: '500',
   }),
+  clearIndicator: (base) => ({
+    ...base,
+    padding: '2px',
+    cursor: 'pointer',
+    color: '#94a3b8',
+    '&:hover': {
+      color: '#64748b',
+    },
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    padding: '4px',
+    color: '#94a3b8',
+  }),
 };
+
+const CURRENCY_OPTIONS = [
+  { value: 'USD', label: 'USD ($)' },
+  { value: 'GBP', label: 'GBP (£)' },
+  { value: 'EUR', label: 'EUR (€)' },
+  { value: 'INR', label: 'INR (₹)' },
+  { value: 'SGD', label: 'SGD (S$)' },
+  { value: 'JPY', label: 'JPY (¥)' }
+];
 
 export default function AddEditModal({ isOpen, onClose, onSave, employee = null, filterOptions = {} }) {
   const isEdit = Boolean(employee);
@@ -42,13 +65,13 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
   const initialForm = {
     name: '',
     email: '',
-    country: filterOptions.countries?.[0] || 'United States',
-    department: filterOptions.departments?.[0] || '',
-    designation: filterOptions.designations?.[0] || '',
-    currency: filterOptions.currencies?.[0] || 'USD',
+    country: '',
+    department: '',
+    designation: '',
+    currency: '',
     basicSalary: '',
-    allowances: '0',
-    deductions: '0',
+    allowances: '',
+    deductions: '',
     effectiveFrom: new Date().toISOString().split('T')[0]
   };
 
@@ -56,24 +79,35 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Pre-fill when editing
+  // Pre-fill when editing, or keep blank when adding
   useEffect(() => {
     if (employee) {
       const sal = employee.salary || {};
       setForm({
         name: employee.name || '',
         email: employee.email || '',
-        country: employee.country || 'United States',
-        department: employee.department || 'Engineering',
-        designation: employee.designation || 'Software Engineer',
-        currency: employee.currency || 'USD',
+        country: employee.country || '',
+        department: employee.department || '',
+        designation: employee.designation || '',
+        currency: employee.currency || '',
         basicSalary: sal.basicSalary !== undefined ? String(sal.basicSalary) : '',
-        allowances: sal.allowances !== undefined ? String(sal.allowances) : '0',
-        deductions: sal.deductions !== undefined ? String(sal.deductions) : '0',
+        allowances: sal.allowances !== undefined ? String(sal.allowances) : '',
+        deductions: sal.deductions !== undefined ? String(sal.deductions) : '',
         effectiveFrom: sal.effectiveFrom || new Date().toISOString().split('T')[0]
       });
     } else {
-      setForm(initialForm);
+      setForm({
+        name: '',
+        email: '',
+        country: '',
+        department: '',
+        designation: '',
+        currency: '',
+        basicSalary: '',
+        allowances: '',
+        deductions: '',
+        effectiveFrom: new Date().toISOString().split('T')[0]
+      });
     }
     setError('');
   }, [employee, isOpen]);
@@ -92,6 +126,10 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
 
     if (!form.name.trim()) return setError('Employee name is required');
     if (!form.email.trim()) return setError('Employee email is required');
+    if (!form.country) return setError('Please select a country');
+    if (!form.currency) return setError('Please select a currency');
+    if (!form.department) return setError('Please select a department');
+    if (!form.designation) return setError('Please select a designation');
     if (!form.basicSalary || basic <= 0) return setError('Basic salary must be greater than zero');
     if (isNetNegative) return setError('Deductions cannot exceed Gross Salary (Net Salary cannot be negative)');
 
@@ -124,10 +162,10 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                {isEdit ? `Edit Salary: ${employee.name}` : 'Add Employee & Salary Record'}
+                {isEdit ? `Edit Employee & Salary Details` : 'Add Employee & Salary Record'}
               </h3>
               <p className="text-xs text-slate-500">
-                {isEdit ? 'Update compensation structure with instant calculation' : 'Create new employee profile and define compensation'}
+                {isEdit ? 'Update compensation structure and salary details' : 'Create new employee profile and define compensation'}
               </p>
             </div>
           </div>
@@ -151,31 +189,37 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
           {/* Employee Basic Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Full Name <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Sarah Jenkins"
+                placeholder="Enter Full Name"
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Corporate Email *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Corporate Email <span className="text-red-500">*</span>
+              </label>
               <input
                 type="email"
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="s.jenkins@orgcorp.com"
+                placeholder="Enter Email Address"
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Country *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Country <span className="text-red-500">*</span>
+              </label>
               <Select
                 options={(filterOptions.countries?.length > 0 ? filterOptions.countries : ['United States', 'United Kingdom', 'Germany', 'India', 'Singapore', 'Japan']).map(c => ({ value: c, label: c }))}
                 value={form.country ? { value: form.country, label: form.country } : null}
@@ -187,42 +231,44 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Currency *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Currency <span className="text-red-500">*</span>
+              </label>
               <Select
-                options={[
-                  { value: 'USD', label: 'USD ($)' },
-                  { value: 'GBP', label: 'GBP (£)' },
-                  { value: 'EUR', label: 'EUR (€)' },
-                  { value: 'INR', label: 'INR (₹)' },
-                  { value: 'SGD', label: 'SGD (S$)' },
-                  { value: 'JPY', label: 'JPY (¥)' }
-                ]}
-                value={form.currency ? { value: form.currency, label: form.currency } : null}
+                options={CURRENCY_OPTIONS}
+                value={form.currency ? CURRENCY_OPTIONS.find(c => c.value === form.currency) || { value: form.currency, label: form.currency } : null}
                 onChange={(opt) => setForm({ ...form, currency: opt ? opt.value : '' })}
                 styles={selectStyles}
                 placeholder="Select Currency"
+                isClearable
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Department *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Department <span className="text-red-500">*</span>
+              </label>
               <Select
                 options={(filterOptions.departments || []).map(d => ({ value: d, label: d }))}
                 value={form.department ? { value: form.department, label: form.department } : null}
                 onChange={(opt) => setForm({ ...form, department: opt ? opt.value : '' })}
                 styles={selectStyles}
                 placeholder="Select Department"
+                isClearable
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Designation *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Designation <span className="text-red-500">*</span>
+              </label>
               <Select
                 options={(filterOptions.designations || []).map(des => ({ value: des, label: des }))}
                 value={form.designation ? { value: form.designation, label: form.designation } : null}
                 onChange={(opt) => setForm({ ...form, designation: opt ? opt.value : '' })}
                 styles={selectStyles}
                 placeholder="Select Designation"
+                isClearable
               />
             </div>
           </div>
@@ -236,14 +282,16 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Basic Salary *</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Basic Salary <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   required
                   value={form.basicSalary}
                   onChange={(e) => setForm({ ...form, basicSalary: e.target.value })}
-                  placeholder="85000"
+                  placeholder="Enter Basic Salary"
                   className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900 font-medium"
                 />
               </div>
@@ -255,7 +303,7 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
                   step="0.01"
                   value={form.allowances}
                   onChange={(e) => setForm({ ...form, allowances: e.target.value })}
-                  placeholder="0"
+                  placeholder="0.00"
                   className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900"
                 />
               </div>
@@ -267,7 +315,7 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
                   step="0.01"
                   value={form.deductions}
                   onChange={(e) => setForm({ ...form, deductions: e.target.value })}
-                  placeholder="0"
+                  placeholder="0.00"
                   className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white text-slate-900"
                 />
               </div>
@@ -279,13 +327,13 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
             <div>
               <p className="text-slate-500 font-medium">Gross Salary (Basic + Allowances):</p>
               <p className="text-base font-bold text-slate-900">
-                {form.currency} {gross.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {form.currency ? `${form.currency} ` : ''}{gross.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             <div className="text-right">
               <p className="text-slate-500 font-medium">Estimated Net Salary (Gross - Deductions):</p>
               <p className={`text-base font-extrabold ${isNetNegative ? 'text-red-600' : 'text-emerald-600'}`}>
-                {form.currency} {net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {form.currency ? `${form.currency} ` : ''}{net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
@@ -306,7 +354,7 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
               className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg shadow-sm shadow-indigo-200 transition-all cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>{isSubmitting ? 'Saving...' : isEdit ? 'Update Salary Record' : 'Save Record'}</span>
+              <span>{isSubmitting ? 'Saving...' : isEdit ? 'Update Record' : 'Save Record'}</span>
             </button>
           </div>
         </form>

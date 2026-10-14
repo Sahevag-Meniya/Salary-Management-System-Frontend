@@ -110,7 +110,7 @@ export default function SalaryRecords() {
   const handleDeleteSalary = async (emp) => {
     const result = await Swal.fire({
       title: 'Delete Employee Record?',
-      html: `This will not be reverted.`,
+      html: `This will not be revert.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#dc2626',
