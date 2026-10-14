@@ -196,7 +196,7 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
       });
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to save salary record');
+      setError(err.message || 'Failed to save salary structure');
     } finally {
       setIsSubmitting(false);
     }
@@ -215,7 +215,7 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                {isEdit ? `Edit Employee & Salary Details` : 'Add Employee & Salary Record'}
+                {isEdit ? `Edit Employee & Salary Structure` : 'Add Employee & Salary Structure'}
               </h3>
               <p className="text-xs text-slate-500">
                 {isEdit ? 'Update compensation structure and salary details' : 'Create new employee profile and define compensation'}
@@ -407,7 +407,7 @@ export default function AddEditModal({ isOpen, onClose, onSave, employee = null,
               className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg shadow-sm shadow-indigo-200 transition-all cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>{isSubmitting ? 'Saving...' : isEdit ? 'Update Record' : 'Save Record'}</span>
+              <span>{isSubmitting ? 'Saving...' : isEdit ? 'Update Structure' : 'Save Structure'}</span>
             </button>
           </div>
         </form>

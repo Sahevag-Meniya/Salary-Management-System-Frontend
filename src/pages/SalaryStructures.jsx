@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import FilterBar from '../components/FilterBar';
 import Pagination from '../components/Pagination';
@@ -40,6 +40,7 @@ const parseFiltersFromSearchParams = (params) => ({
 });
 
 export default function SalaryStructures() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -434,7 +435,12 @@ export default function SalaryStructures() {
                       </td>
                       <td className="py-3 px-4 font-mono font-medium text-slate-400">#{emp.id}</td>
                       <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900">{emp.name}</div>
+                        <Link
+                          to={`/structures/${emp.id}`}
+                          className="font-bold text-slate-900 hover:text-indigo-600 transition-colors block"
+                        >
+                          {emp.name}
+                        </Link>
                         <div className="text-[11px] text-slate-400 truncate max-w-48">{emp.email}</div>
                       </td>
                       <td className="py-3 px-4">
@@ -491,14 +497,13 @@ export default function SalaryStructures() {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setSelectedForDetail(emp);
-                                    setIsDetailOpen(true);
                                     setOpenActionId(null);
+                                    navigate(`/structures/${emp.id}`);
                                   }}
                                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/70 transition-colors text-left cursor-pointer"
                                 >
                                   <Eye className="w-3.5 h-3.5 text-slate-400" />
-                                  <span>View</span>
+                                  <span>View Structure</span>
                                 </button>
 
                                 <button
