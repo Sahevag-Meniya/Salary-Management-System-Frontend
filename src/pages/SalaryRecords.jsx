@@ -7,7 +7,7 @@ import AddEditModal from '../components/AddEditModal';
 import EmployeeDetailModal from '../components/EmployeeDetailModal';
 import Swal from 'sweetalert2';
 import {
-  UserPlus, ArrowUpDown, Eye, Edit2, Trash2,
+  UserPlus, ArrowUpDown, Eye, Edit2, Trash2, MoreVertical,
   RefreshCw, Users, FileDown, AlertCircle
 } from 'lucide-react';
 
@@ -57,6 +57,18 @@ export default function SalaryRecords() {
   const [selectedForEdit, setSelectedForEdit] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedForDetail, setSelectedForDetail] = useState(null);
+  const [openActionId, setOpenActionId] = useState(null);
+
+  // Close actions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.action-menu-container')) {
+        setOpenActionId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch filter options once
   useEffect(() => {
@@ -236,7 +248,7 @@ export default function SalaryRecords() {
           </div>
         )}
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[350px]">
           <table className="w-full text-left text-xs text-slate-600 border-collapse">
             <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
@@ -297,11 +309,10 @@ export default function SalaryRecords() {
                 <tr>
                   <td colSpan="9" className="py-12 text-center text-slate-500">
                     <p className="font-semibold text-sm">No employee records found</p>
-                    <p className="text-xs text-slate-400 mt-1">Try adjusting your search criteria or filters.</p>
                   </td>
                 </tr>
               ) : (
-                records.map((emp) => {
+                records.map((emp, index) => {
                   const sal = emp.salary || {};
                   return (
                     <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
@@ -334,35 +345,75 @@ export default function SalaryRecords() {
                           {formatNumber(sal.netSalary)}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center justify-center gap-1.5">
+                      <td className="py-3 px-4 text-center">
+                        <div className="relative inline-block text-left action-menu-container">
                           <button
-                            onClick={() => {
-                              setSelectedForDetail(emp);
-                              setIsDetailOpen(true);
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenActionId(prev => prev === emp.id ? null : emp.id);
                             }}
-                            className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition cursor-pointer"
-                            title="View Full Breakdown"
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                              openActionId === emp.id
+                                ? 'bg-indigo-50 text-indigo-600'
+                                : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                            }`}
+                            title="Actions"
                           >
-                            <Eye className="w-4 h-4" />
+                            <MoreVertical className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => {
-                              setSelectedForEdit(emp);
-                              setIsAddEditOpen(true);
-                            }}
-                            className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition cursor-pointer"
-                            title="Edit Record"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteSalary(emp)}
-                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
-                            title="Delete Record"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+
+                          {openActionId === emp.id && (
+                            <div
+                              className={`absolute right-0 w-36 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100 ${
+                                index >= records.length - 2 && records.length > 2
+                                  ? 'bottom-full mb-1 origin-bottom-right'
+                                  : 'mt-1 origin-top-right'
+                              }`}
+                            >
+                              <div className="py-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedForDetail(emp);
+                                    setIsDetailOpen(true);
+                                    setOpenActionId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/70 transition-colors text-left cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>View</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedForEdit(emp);
+                                    setIsAddEditOpen(true);
+                                    setOpenActionId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-amber-600 hover:bg-amber-50/70 transition-colors text-left cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Edit</span>
+                                </button>
+                              </div>
+
+                              <div className="py-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionId(null);
+                                    handleDeleteSalary(emp);
+                                  }}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors text-left cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
