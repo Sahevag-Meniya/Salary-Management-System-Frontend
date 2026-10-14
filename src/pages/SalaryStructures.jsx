@@ -509,14 +509,13 @@ export default function SalaryStructures() {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setSelectedForEdit(emp);
-                                    setIsAddEditOpen(true);
                                     setOpenActionId(null);
+                                    navigate(`/structures/${emp.id}/edit`);
                                   }}
                                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-amber-600 hover:bg-amber-50/70 transition-colors text-left cursor-pointer"
                                 >
                                   <Edit2 className="w-3.5 h-3.5 text-slate-400" />
-                                  <span>Edit</span>
+                                  <span>Edit Structure</span>
                                 </button>
                               </div>
 

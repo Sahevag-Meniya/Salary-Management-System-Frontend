@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import {
   ArrowLeft, Building2, Globe, Mail, Briefcase, Calendar,
   ShieldCheck, CheckCircle2, AlertCircle, RefreshCw,
-  TrendingUp, Percent, DollarSign, FileText
+  TrendingUp, Percent, DollarSign, FileText, Edit2
 } from 'lucide-react';
 
 export default function SalaryStructureDetail() {
@@ -111,9 +111,17 @@ export default function SalaryStructureDetail() {
   const deductionPercent = grossSalary > 0 ? ((totalDeductions / grossSalary) * 100).toFixed(1) : 0;
 
   return (
-    <div className="flex-1 flex flex-col space-y-5 pb-12 max-w-6xl mx-auto w-full">
+    <div className="flex-1 flex flex-col space-y-4 pb-1 max-w-6xl mx-auto w-full">
       {/* Top Action Bar */}
-      <div className="flex items-center justify-end pt-2">
+      <div className="flex items-center justify-end gap-2.5 pt-2">
+        <button
+          onClick={() => navigate(`/structures/${employee.id}/edit`)}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors cursor-pointer shadow-xs"
+        >
+          <Edit2 className="w-3.5 h-3.5 text-amber-600" />
+          <span>Edit Structure</span>
+        </button>
+
         <button
           onClick={() => navigate('/structures')}
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer shadow-xs"
