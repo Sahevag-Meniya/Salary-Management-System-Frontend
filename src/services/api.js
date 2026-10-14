@@ -88,6 +88,10 @@ export const api = {
     return request('/analytics/by-designation');
   },
 
+  async getAnalyticsTopEarners(limit = 5) {
+    return request(`/analytics/top-earners?limit=${limit}`);
+  },
+
   // CSV Export URL builder
   getExportUrl(params = {}) {
     const query = new URLSearchParams();
