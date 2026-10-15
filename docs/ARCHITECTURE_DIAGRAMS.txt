@@ -1,0 +1,234 @@
+================================================================================
+GLOBAL SALARY MANAGEMENT SYSTEM — ARCHITECTURE DIAGRAMS (TEXT SPECIFICATION)
+================================================================================
+Target User Persona: HR Manager
+System Scale:        10,000 Employees across Multi-Country Jurisdictions
+Technology Stack:    React 19 + Express.js + MySQL 8 (3-Tier Decoupled Architecture)
+================================================================================
+
+
+--------------------------------------------------------------------------------
+DIAGRAM 1: HIGH-LEVEL 3-TIER SYSTEM ARCHITECTURE
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+|                             HR MANAGER (BROWSER)                             |
++------------------------------------------------------------------------------+
+                                       │
+                                       ▼ (User Actions: Search, Filter, Edit, Export)
++------------------------------------------------------------------------------+
+| TIER 1: FRONTEND CLIENT (React 19 + Vite + Tailwind CSS)                     |
+| Port: 5173                                                                   |
+|                                                                              |
+|  ┌─────────────────────┐   ┌─────────────────────┐   ┌────────────────────┐  |
+|  │ Analytics Dashboard │   │ 10k Records Grid    │   │ Add / Edit Modals  │  |
+|  │ - Recharts Charts   │   │ - Server Pagination │   │ - Live Formula Sync│  |
+|  │ - Currency Switcher │   │ - Debounced Search  │   │ - Itemized Slips   │  |
+|  └─────────────────────┘   └─────────────────────┘   └────────────────────┘  |
+|                                       │                                      |
+|                                       ▼                                      |
+|  ┌────────────────────────────────────────────────────────────────────────┐  |
+|  │ Centralized API Client (src/services/api.js)                           │  |
+|  │ - URLSearchParams query builder                                        │  |
+|  │ - Native fetch with standardized 4xx/5xx error handling                │  |
+|  └────────────────────────────────────────────────────────────────────────┘  |
++------------------------------------------------------------------------------+
+                                       │
+                                       │ HTTP / REST JSON Requests
+                                       │ (CORS Enabled: CLIENT_URL)
+                                       ▼
++------------------------------------------------------------------------------+
+| TIER 2: BACKEND API SERVER (Node.js + Express.js)                            |
+| Port: 5000                                                                   |
+|                                                                              |
+|  ┌────────────────────────────────────────────────────────────────────────┐  |
+|  │ Express REST Routers (/api/*)                                          │  |
+|  │ - /api/structures (CRUD Lifecycle)    - /api/structures/filters        │  |
+|  │ - /api/analytics/summary (Isolated)   - /api/reports/export (Stream)   │  |
+|  └────────────────────────────────────────────────────────────────────────┘  |
+|                       │                               │                      |
+|                       ▼                               ▼                      |
+|  ┌─────────────────────────┐             ┌────────────────────────────────┐  |
+|  │ Payroll Math Engine     │             │ Chunked CSV Streamer           │  |
+|  │ - 2-decimal precision   │             │ - Batch cursor (1,000 rows)    │  |
+|  │ - HRA, DA, PF formulas  │             │ - Content-Disposition: attach  │  |
+|  │ - Invariant validation  │             │ - Zero memory bloat (< 20MB)   │  |
+|  └─────────────────────────┘             └────────────────────────────────┘  |
++------------------------------------------------------------------------------+
+                                       │
+                                       │ SQL Connection Pool
+                                       │ (Sequelize ORM)
+                                       ▼
++------------------------------------------------------------------------------+
+| TIER 3: DATA PERSISTENCE LAYER (MySQL 8 Relational Database)                 |
+| Port: 3306                                                                   |
+|                                                                              |
+|  ┌────────────────────────────────────────────────────────────────────────┐  |
+|  │ 8 Relational Tables (Third Normal Form - 3NF)                          │  |
+|  │ - employees               - employee_salary_structures                 │  |
+|  │ - salary_components      - employee_salary_components                 │  |
+|  │ - countries               - departments                                │  |
+|  │ - designations            - salary_slips                               │  |
+|  └────────────────────────────────────────────────────────────────────────┘  |
+|                       │                               │                      |
+|                       ▼                               ▼                      |
+|  ┌─────────────────────────┐             ┌────────────────────────────────┐  |
+|  │ 10,000 Seeded Employees │             │ Performance B-Tree Indexes     │  |
+|  │ - 6 Countries (USD, INR,│             │ - idx_country_dept_net         │  |
+|  │   EUR, GBP, SGD, JPY)   │             │ - Sub-15ms Query Latency       │  |
+|  └─────────────────────────┘             └────────────────────────────────┘  |
++------------------------------------------------------------------------------+
+
+
+--------------------------------------------------------------------------------
+DIAGRAM 3: PAYROLL CALCULATION & FORMULA FLOW
+--------------------------------------------------------------------------------
+
+                     +---------------------------------------+
+                     |        HR MANAGER ENTERS INPUT        |
+                     |         Basic Salary ($ / ₹ / €)      |
+                     +---------------------------------------+
+                                         │
+                   ┌─────────────────────┴─────────────────────┐
+                   │                                           │
+                   ▼                                           ▼
+      +─────────────────────────+                 +─────────────────────────+
+      |  EARNINGS & ALLOWANCES  |                 |  STATUTORY DEDUCTIONS   |
+      +─────────────────────────+                 +─────────────────────────+
+      | HRA = 40% of Basic      |                 | PF = 12% of Basic       |
+      | DA  = 10% of Basic      |                 | Professional Tax (Fixed)|
+      | Conveyance (Fixed)      |                 | Health Insurance (Fixed)|
+      | Medical (Fixed)         |                 | TDS / Income Tax Slabs  |
+      | Special Allowance       |                 +─────────────────────────+
+      +─────────────────────────+                              │
+                   │                                           │
+                   ▼                                           ▼
+      +─────────────────────────+                 +─────────────────────────+
+      |      GROSS SALARY       |                 |    TOTAL DEDUCTIONS     |
+      |   Basic + Allowances    |                 |   PF + Tax + Insurance  |
+      +─────────────────────────+                 +─────────────────────────+
+                   │                                           │
+                   └─────────────────────┬─────────────────────┘
+                                         │
+                                         ▼
+                     +---------------------------------------+
+                     |        INVARIANT CHECK & GUARD        |
+                     |      Is Deductions <= Gross Salary?   |
+                     +---------------------------------------+
+                                    │         │
+                           (NO)     │         │    (YES)
+            ┌───────────────────────┘         └────────────────────────┐
+            ▼                                                          ▼
+  +─────────────────────────+                              +─────────────────────────+
+  |    REJECT TRANSACTION   |                              |   NET TAKE-HOME PAY     |
+  |  Throw 400 Bad Request  |                              | Gross - Total Deductions|
+  | (Deductions > Gross)    |                              +─────────────────────────+
+  +─────────────────────────+                                          │
+                                                                       ▼
+                                                           +─────────────────────────+
+                                                           | 2-DECIMAL QUANTIZATION  |
+                                                           | round(value * 100) / 100|
+                                                           +─────────────────────────+
+                                                                       │
+                                                                       ▼
+                                                           +─────────────────────────+
+                                                           |   PERSIST TO DATABASE   |
+                                                           |   MySQL Decimal(12, 2)  |
+                                                           +─────────────────────────+
+
+
+
+--------------------------------------------------------------------------------
+DIAGRAM 4: MULTI-CURRENCY ISOLATION ARCHITECTURE (ZERO FX MIXING)
+--------------------------------------------------------------------------------
+
+                     +---------------------------------------+
+                     |    10,000 MULTI-COUNTRY EMPLOYEES     |
+                     +---------------------------------------+
+                                         │
+                                         ▼ SQL GROUP BY c.currency_code
+    ┌────────────┬────────────┬──────────┴──┬────────────┬────────────┬────────────┐
+    │            │            │             │            │            │            │
+    ▼            ▼            ▼             ▼            ▼            ▼            ▼
+ [USD Pool]   [EUR Pool]   [GBP Pool]    [INR Pool]   [SGD Pool]   [JPY Pool]   [CAD Pool]
+  USA: $       Germany: €   UK: £         India: ₹     Singapore:S$ Japan: ¥     Canada: C$
+ 2,500 Emps   1,800 Emps   1,500 Emps    2,400 Emps   1,000 Emps   800 Emps     (Optional)
+
+    │            │            │             │            │            │            │
+    └────────────┴────────────┴──────────┬──┴────────────┴────────────┴────────────┘
+                                         │
+                                         ▼
+                     +---------------------------------------+
+                     |   INTERACTIVE CURRENCY SWITCHER UI    |
+                     |   - KPI Cards update per currency     |
+                     |   - No cross-currency synthetic sums  |
+                     |   - Total Payroll always isolated     |
+                     +---------------------------------------+
+
+
+
+--------------------------------------------------------------------------------
+DIAGRAM 5: RELATIONAL DATABASE ENTITY RELATIONSHIP MODEL (3NF)
+--------------------------------------------------------------------------------
+
+  +---------------+                  +---------------+
+  |   COUNTRIES   | 1              M |   EMPLOYEES   |
+  |---------------+------------------|---------------|
+  | id (PK)       |                  | id (PK)       |
+  | name          |                  | name (Indexed)|
+  | currency_code |                  | email (Unique)|
+  | symbol        |                  | country_id(FK)|
+  +---------------+                  | desig_id (FK) |
+                                     +---------------+
+                                             │ 1
+  +---------------+                          │
+  |  DEPARTMENTS  | 1                        │
+  |---------------+                          ▼ 1
+  | id (PK)       |              +-----------------------------+
+  | name (Indexed)|              | EMPLOYEE_SALARY_STRUCTURES  |
+  +---------------+              |-----------------------------|
+          │ 1                    | id (PK)                     |
+          │                      | employee_id (FK, Unique)    |
+          ▼ M                    | gross_salary (Indexed)      |
+  +---------------+              | total_deductions            |
+  | DESIGNATIONS  | 1          M | net_salary (Indexed)        |
+  |---------------+--------------| currency (CHAR 3, Indexed)  |
+  | id (PK)       |              | is_current (Indexed)        |
+  | name (Indexed)|              +-----------------------------+
+  | department_id |                      │ 1            │ 1
+  +---------------+                      │              │
+                                         │              ▼ M
+                                         │     +-----------------------+
+                                         │     |     SALARY_SLIPS      |
+                                         │     |-----------------------|
+                                         │     | id (PK)               |
+                                         │     | employee_id (FK)      |
+                                         │     | slip_number (Unique)  |
+                                         │     | month / year          |
+                                         │     | net_salary            |
+                                         │     +-----------------------+
+                                         ▼ M
+                         +-----------------------------+
+                         | EMPLOYEE_SALARY_COMPONENTS  |
+                         |-----------------------------|
+                         | id (PK)                     |
+                         | structure_id (FK)           |
+                         | component_id (FK)           |
+                         | amount (Decimal 12,2)       |
+                         +-----------------------------+
+                                         ▲ M
+                                         │
+                                         │ 1
+                         +-----------------------------+
+                         |      SALARY_COMPONENTS      |
+                         |-----------------------------|
+                         | id (PK)                     |
+                         | name (Basic, HRA, PF, etc.) |
+                         | code (BASIC, HRA, DA, PF)   |
+                         | type (earning | deduction)  |
+                         | calculation_type (pct|fixed)|
+                         +-----------------------------+
+
+================================================================================
+END OF ARCHITECTURE SPECIFICATION
+================================================================================
