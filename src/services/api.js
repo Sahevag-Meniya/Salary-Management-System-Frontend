@@ -96,8 +96,9 @@ export const api = {
     return request('/analytics/by-designation');
   },
 
-  async getAnalyticsTopEarners(limit = 5) {
-    return request(`/analytics/top-earners?limit=${limit}`);
+  async getAnalyticsTopEarners(currency) {
+    const query = currency ? `?currency=${encodeURIComponent(currency)}` : '';
+    return request(`/analytics/top-earners${query}`);
   },
 
   // CSV Export URL builder

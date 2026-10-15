@@ -23,13 +23,23 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchTopEarners = async (curr) => {
+    if (!curr) return;
+    try {
+      const earnersRes = await api.getAnalyticsTopEarners(curr);
+      setTopEarners(earnersRes.data || []);
+    } catch (err) {
+      console.error('Failed to load top earners:', err);
+    }
+  };
+
   const fetchDashboardData = async () => {
     setLoading(true);
     setError(null);
     try {
       const [sumRes, earnersRes, deptRes, desigRes] = await Promise.all([
         api.getAnalyticsSummary(),
-        api.getAnalyticsTopEarners(5),
+        api.getAnalyticsTopEarners(initialCurrency),
         api.getAnalyticsByDepartment(),
         api.getAnalyticsByDesignation(),
       ]);
@@ -42,12 +52,18 @@ export default function Dashboard() {
       const availableCurrencies = sumRes.data?.currencyBreakdown?.map((c) => c.currency) || [];
       const currentParam = searchParams.get('currency');
 
+      let targetCurr = selectedCurrency;
       if (currentParam && availableCurrencies.includes(currentParam)) {
+        targetCurr = currentParam;
         setSelectedCurrency(currentParam);
       } else if (availableCurrencies.length > 0) {
-        const defaultCurr = availableCurrencies.includes(selectedCurrency) ? selectedCurrency : availableCurrencies[0];
-        setSelectedCurrency(defaultCurr);
-        setSearchParams({ currency: defaultCurr }, { replace: true });
+        targetCurr = availableCurrencies.includes(selectedCurrency) ? selectedCurrency : availableCurrencies[0];
+        setSelectedCurrency(targetCurr);
+        setSearchParams({ currency: targetCurr }, { replace: true });
+      }
+
+      if (targetCurr !== initialCurrency) {
+        fetchTopEarners(targetCurr);
       }
     } catch (err) {
       setError(err.message || 'Failed to load executive analytics');
@@ -65,12 +81,14 @@ export default function Dashboard() {
     const currFromUrl = searchParams.get('currency');
     if (currFromUrl && currFromUrl !== selectedCurrency) {
       setSelectedCurrency(currFromUrl);
+      fetchTopEarners(currFromUrl);
     }
   }, [searchParams]);
 
   const handleCurrencyChange = (curr) => {
     setSelectedCurrency(curr);
     setSearchParams({ currency: curr }, { replace: true });
+    fetchTopEarners(curr);
   };
 
   const currentCurrencyData = summary?.currencyBreakdown?.find(
