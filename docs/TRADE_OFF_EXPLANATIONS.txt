@@ -1,0 +1,50 @@
+## Trade-off Explanations
+
+### 1. MySQL vs MongoDB
+**Decision:** Use MySQL as the relational database.
+
+**Reason:** Employee and salary records have structured relationships, and relational queries are useful for reporting and analytics. also i know how to use mysql.
+
+**Trade-off:** Database schema changes require migrations and careful management.
+
+### 2. Normalized Employee and Salary Tables
+**Decision:** Store employee details and salary records in separate related tables.
+
+**Reason:** This reduces data duplication and makes salary history easier to manage.
+
+**Trade-off:** Some reports require JOIN queries between tables.
+
+### 3. JavaScript vs TypeScript
+**Decision:** Use JavaScript for the frontend and backend.
+
+**Reason:** It keeps the development setup simple and supports faster MVP development.
+
+**Trade-off:** Static type checking is not available by default.
+
+### 4. MVP Scope vs Full Employee Managment System
+**Decision:** Focus on employee records, salary records, salary analytics, and reports.
+
+**Reason:** The application prioritizes the HR Manager's core needs and can be delivered within a limited timeframe.
+
+**Trade-off:** Features such as payroll processing, approval workflows, bank transfers, and advanced HR management are outside the initial scope.
+
+### 5. Basic Analytics vs Advanced Analytics
+**Decision:** Provide average, highest, and lowest salary metrics, along with relevant salary reports.
+
+**Reason:** These metrics help HR understand salary distribution quickly.
+
+**Trade-off:** Predictive analytics, forecasting, and advanced statistical analysis are not included in the MVP.
+
+### 6. Excel/CSV Import and Export
+**Decision:** Support importing existing salary data and exporting reports.
+
+**Reason:** HR can continue using existing spreadsheet data without manually entering every record.
+
+**Trade-off:** Imported data requires validation, duplicate checks, and error handling.
+
+### 7. Salary Management vs Salary Payments
+**Decision:** Manage salary records and provide reporting without processing actual payments.
+
+**Reason:** The application focuses on salary transparency, record management, and answering HR-related salary questions.
+
+**Trade-off:** Salary disbursement and bank integration are not supported.
