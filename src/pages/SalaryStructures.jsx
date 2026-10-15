@@ -5,7 +5,7 @@ import FilterBar from '../components/FilterBar';
 import Pagination from '../components/Pagination';
 import Swal from 'sweetalert2';
 import {
-  ArrowUpDown, Eye, Edit2, Trash2, MoreVertical,
+  ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit2, Trash2, MoreVertical,
   RefreshCw, Users, FileDown, AlertCircle, Plus
 } from 'lucide-react';
 
@@ -114,8 +114,8 @@ export default function SalaryStructures() {
     if (filters.currency) params.set('currency', filters.currency);
     if (filters.minSalary) params.set('minSalary', filters.minSalary);
     if (filters.maxSalary) params.set('maxSalary', filters.maxSalary);
-    if (filters.sortBy && filters.sortBy !== 'id') params.set('sortBy', filters.sortBy);
-    if (filters.sortOrder && filters.sortOrder !== 'ASC') params.set('sortOrder', filters.sortOrder);
+    if (filters.sortBy) params.set('sortBy', filters.sortBy);
+    if (filters.sortOrder) params.set('sortOrder', filters.sortOrder);
     if (filters.page && Number(filters.page) !== 1) params.set('page', String(filters.page));
     if (filters.limit && Number(filters.limit) !== 25) params.set('limit', String(filters.limit));
 
@@ -164,6 +164,17 @@ export default function SalaryStructures() {
       sortOrder: prev.sortBy === field && prev.sortOrder === 'ASC' ? 'DESC' : 'ASC',
       page: 1
     }));
+  };
+
+  const renderSortIcon = (field) => {
+    if (filters.sortBy === field) {
+      return filters.sortOrder === 'DESC' ? (
+        <ArrowDown className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+      ) : (
+        <ArrowUp className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+      );
+    }
+    return <ArrowUpDown className="w-3 h-3 text-slate-400 shrink-0" />;
   };
 
   const handleResetFilters = () => {
@@ -331,14 +342,22 @@ export default function SalaryStructures() {
                     title={isAllSelected ? "Deselect All Records" : "Select All Records on this page"}
                   />
                 </th>
-                <th className="py-3 px-4 bg-slate-50">#ID</th>
+                <th
+                  onClick={() => handleSort('id')}
+                  className="py-3 px-4 bg-slate-50 cursor-pointer hover:text-slate-900 select-none"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className={filters.sortBy === 'id' ? 'text-indigo-700 font-bold' : ''}>#ID</span>
+                    {renderSortIcon('id')}
+                  </div>
+                </th>
                 <th
                   onClick={() => handleSort('name')}
                   className="py-3 px-4 bg-slate-50 cursor-pointer hover:text-slate-900 select-none"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span>Employee</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    <span className={filters.sortBy === 'name' ? 'text-indigo-700 font-bold' : ''}>Employee</span>
+                    {renderSortIcon('name')}
                   </div>
                 </th>
                 <th
@@ -346,18 +365,26 @@ export default function SalaryStructures() {
                   className="py-3 px-4 bg-slate-50 cursor-pointer hover:text-slate-900 select-none"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span>Region / Currency</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    <span className={filters.sortBy === 'country' ? 'text-indigo-700 font-bold' : ''}>Region / Currency</span>
+                    {renderSortIcon('country')}
                   </div>
                 </th>
-                <th className="py-3 px-4 bg-slate-50">Department & Role</th>
+                <th
+                  onClick={() => handleSort('department')}
+                  className="py-3 px-4 bg-slate-50 cursor-pointer hover:text-slate-900 select-none"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className={filters.sortBy === 'department' ? 'text-indigo-700 font-bold' : ''}>Department & Role</span>
+                    {renderSortIcon('department')}
+                  </div>
+                </th>
                 <th
                   onClick={() => handleSort('basic_salary')}
                   className="py-3 px-4 bg-slate-50 text-right cursor-pointer hover:text-slate-900 select-none"
                 >
                   <div className="flex items-center justify-end gap-1.5">
-                    <span>Basic Pay</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    <span className={filters.sortBy === 'basic_salary' ? 'text-indigo-700 font-bold' : ''}>Basic Pay</span>
+                    {renderSortIcon('basic_salary')}
                   </div>
                 </th>
                 <th className="py-3 px-4 bg-slate-50 text-right">Allowances</th>
@@ -368,7 +395,7 @@ export default function SalaryStructures() {
                 >
                   <div className="flex items-center justify-end gap-1.5 text-indigo-700 font-extrabold">
                     <span>Net Take-Home</span>
-                    <ArrowUpDown className="w-3 h-3 text-indigo-400" />
+                    {renderSortIcon('net_salary')}
                   </div>
                 </th>
                 <th className="py-3 px-4 bg-slate-50 text-center">Actions</th>
