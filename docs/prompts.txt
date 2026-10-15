@@ -1,0 +1,87 @@
+# All User Building Instructions & Prompts Log
+=================================================
+
+**Project:** Global Employee Salary Management System (10,000 Employees)
+=========================================================================
+
+1. I have setup backend on Git. Now setup basic Express server.
+
+2. We have to use only JavaScript. Do not use TypeScript.
+
+3. We want to manage database using Sequelize CLI migrations. Modify project according to this.
+
+4. Remove `employee_code` from users table. Keep only `name`, remove `first_name` and `last_name`.
+
+5. First setup Vite app. If any package is needed, ask me before using it.
+
+6. We need to add departments and designations tables. Both tables should have relationship, and their IDs will be used as foreign keys in employees table. Give me the schema.
+
+7. Create separate migrations for departments and designations tables. Also create their models. Do not add any logic to migrate existing data.
+
+8. We have created department, designation and country tables. Now we should create a country and currency table also.
+
+9. Integrate department, designation and country into employees table with proper relationships and joins, so we can fetch data easily.
+
+10. Create model and migration for `salary_components` table using the given SQL schema.
+
+11. Create model and migration for `employee_salary_structures` table using the given SQL schema.
+
+12. Create migration and model for `employee_salary_components` table using the given SQL schema.
+
+13. Add one more column in `salary_components` table for percentage of.
+
+14. First create department seeding migration. Then create designation seeding migration according to departments. Remove extra seeding scripts.
+
+15. Create seeding script for well-known countries.
+
+16. Create seeding script for salary components.
+
+17. Create seeding script for 10,000 employees.
+
+18. Create seeding script for employee salary structures with active package.
+
+19. We want to use `react-select` for dropdowns.
+
+20. Improve dropdown filter styling. Add `isClearable` option. Show Reset Filters button only when any filter is active.
+
+21. Install `react-router-dom` and add routing. There are three tabs in navbar, so make three separate pages for them.
+
+22. Add debouncing in Net Salary Range filter.
+
+23. Fix styling of pagination limit dropdown. It should look like filter dropdowns.
+
+24. We want to use SweetAlert package for delete confirmation. Install it and implement it.
+
+25. When a record is inserted, show an added success alert using SweetAlert.
+
+26. Add clear cross option in Currency, Department and Designation dropdowns in Add Employee & Salary Record form.
+
+27. Make the `*` symbol red in add/edit form.
+
+28. On Dashboard and Salary Records pages, persist filters and pagination details in URL search params.
+
+29. In Actions column, remove all three buttons and show three vertical dots. On clicking it, show three options: View, Edit and Delete. Keep existing functionality same.
+
+30. On Salary Records page, only the table section should be scrollable. The remaining page should not scroll.
+
+31. Style the scrollbar according to our UI so it looks properly blended with the design.
+
+32. On Dashboard, the section below Currency filter should be scrollable. The full page should not scroll.
+
+33. Our website should use full screen width with only 3% padding on left and right sides.
+
+34. Add a checkbox before every record and a Select All option in table header. User should be able to export only selected records. Export button should remain disabled until at least one record is selected.
+
+35. When user selects Select All, all records matching the applied filters should be exported. When user clicks Export after Select All, call the API with applied filters, fetch all matching records from backend and export them.
+
+36. In Salary Comparison by Role & Seniority, compare minimum and maximum salary. Also show a separate chart for average salary role-wise.
+
+37. Remove Country-wise Payroll Distribution chart. Instead, show the top 5 employees with their salaries.
+
+38. I have renamed Salary Records page to Salary Structure. Update all related naming in the code.
+
+39. When user clicks View on a salary structure, open a new page and show all details of that salary structure.
+
+40. Add a separate page for editing salary structure.
+
+41. In Add Salary Structure, show all active components so we can track earnings and deductions. In the edit flow also, show all components that are active in the salary structure.
